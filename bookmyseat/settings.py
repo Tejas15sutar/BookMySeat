@@ -29,7 +29,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = [
-    "https://django-bookmyseat-clone.vercel.app"
+    "https://*.vercel.app",
 ]
 
 
