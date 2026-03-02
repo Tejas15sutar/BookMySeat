@@ -19,26 +19,33 @@
 
     <div class="row" id="movieList">
         {% for movie in movies %}
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 shadow-sm">
-                <img src="{{ movie.image.url }}" class="card-img-top" alt="{{ movie.name }}" style="height: 300px; object-fit: cover;">
-                <div class="card-body">
-                    <h5 class="card-title">{{ movie.name }}</h5>
-                    <p class="card-text">
-                        <i class="fas fa-star text-warning"></i> {{ movie.rating }}
-                    </p>
-                    <p class="card-text">
-                        <small class="text-muted">
+        <div class="card h-100 shadow-sm">
+            <a href="{% url 'movie_detail' movie.id %}" style="text-decoration: none; color: inherit;">
+                <div class="card h-100 shadow-sm">
+                    <a href="{% url 'movie_detail' movie.id %}">
+                        <img src="{{ movie.image.url }}" class="card-img-top" alt="{{ movie.name }}" style="height: 300px; object-fit: cover;">
+                    </a>
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <a href="{% url 'movie_detail' movie.id %}" class="text-dark">
+                                 {{ movie.name }}
+                            </a>
+                        </h5>
+                        <p class="card-text">
+                            <i class="fas fa-star text-warning"></i> {{ movie.rating }}
+                        </p>
+                        <p class="card-text">
+                            <small class="text-muted">
                             <i class="fas fa-users"></i> Cast: {{ movie.cast }}
                         </small>
-                    </p>
-                </div>
-                <div class="card-footer bg-white border-top-0">
-                    <a href="{% url 'theater_list' movie.id %}" class="btn btn-outline-primary btn-block">
+                        </p>
+                    </div>
+                    <div class="card-footer bg-white border-top-0">
+                        <a href="{% url 'theater_list' movie.id %}" class="btn btn-outline-primary btn-block">
                         View Theaters <i class="fas fa-chevron-right ml-2"></i>
                     </a>
+                    </div>
                 </div>
-            </div>
         </div>
         {% empty %}
         <div class="col-12 text-center">

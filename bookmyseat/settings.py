@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'users',
     'movies',
+    'csp',
 ]
 
 MIDDLEWARE = [
@@ -54,6 +55,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'csp.middleware.CSPMiddleware',
 ]
 AUTH_USER_MODEL = 'auth.User'
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
@@ -133,3 +135,52 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CONTENT_SECURITY_POLICY = {
+    "DIRECTIVES": {
+
+        "default-src": ("'self'",),
+
+        "style-src": (
+            "'self'",
+            "'unsafe-inline'",
+            "https://cdn.jsdelivr.net",
+            "https://maxcdn.bootstrapcdn.com",
+            "https://cdnjs.cloudflare.com",
+        ),
+
+        "script-src": (
+            "'self'",
+            "'unsafe-inline'",
+            "https://cdn.jsdelivr.net",
+            "https://maxcdn.bootstrapcdn.com",
+            "https://cdnjs.cloudflare.com",
+            "https://code.jquery.com",
+        ),
+
+        "img-src": (
+            "'self'",
+            "data:",
+            "https://img.youtube.com",
+            "https://cdn.jsdelivr.net",
+            "https://cdnjs.cloudflare.com",
+            "https://assets-in.bmscdn.com",
+            "https://storage.googleapis.com",
+        ),
+
+
+        "font-src": (
+            "'self'",
+            "https://cdn.jsdelivr.net",
+            "https://cdnjs.cloudflare.com",
+            "https://maxcdn.bootstrapcdn.com",
+        ),
+
+        "connect-src": (
+            "'self'",
+            "https://cdn.jsdelivr.net",
+            "https://maxcdn.bootstrapcdn.com",
+            "https://cdnjs.cloudflare.com",
+        ),
+    }
+}
