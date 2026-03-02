@@ -1,5 +1,6 @@
 Django
 django-csp
+dj-database-url
 gunicorn
 whitenoise
 psycopg2-binary
