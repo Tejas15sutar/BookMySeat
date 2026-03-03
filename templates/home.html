@@ -150,7 +150,7 @@
         <a href="#" class="text-danger font-weight-bold">See All</a>
     </div>
     <div class="row">
-        {% if movies %} {% for movie in movies|slice:":4" %}
+        {% if movies %} {% for movie in movies|slice:":6" %}
         <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-4">
             <div class="movie-card">
                 <a href="{% url 'theater_list' movie.id %}">
