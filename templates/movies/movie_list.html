@@ -19,88 +19,96 @@
 
     <div class="row" id="movieList">
         {% for movie in movies %}
-        <div class="card h-100 shadow-sm">
-            <a href="{% url 'movie_detail' movie.id %}" style="text-decoration: none; color: inherit;">
-                <div class="card h-100 shadow-sm">
-                    <a href="{% url 'movie_detail' movie.id %}">
-                        <img src="{{ movie.image.url }}" class="card-img-top" alt="{{ movie.name }}" style="height: 300px; object-fit: cover;">
+        <div class="col-md-4 mb-4">
+            <!-- ✅ ADD COLUMN -->
+            <div class="card h-100 shadow-sm">
+
+                <a href="{% url 'movie_detail' movie.id %}">
+                    <img src="{{ movie.image.url }}" class="card-img-top" alt="{{ movie.name }}" style="height: 350px; width: 100%; object-fit: cover;">
+                </a>
+
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <a href="{% url 'movie_detail' movie.id %}" class="text-dark">
+                        {{ movie.name }}
                     </a>
-                    <div class="card-body">
-                        <h5 class="card-title">
-                            <a href="{% url 'movie_detail' movie.id %}" class="text-dark">
-                                 {{ movie.name }}
-                            </a>
-                        </h5>
-                        <p class="card-text">
-                            <i class="fas fa-star text-warning"></i> {{ movie.rating }}
-                        </p>
-                        <p class="card-text">
-                            <small class="text-muted">
-                            <i class="fas fa-users"></i> Cast: {{ movie.cast }}
-                        </small>
-                        </p>
-                    </div>
-                    <div class="card-footer bg-white border-top-0">
-                        <a href="{% url 'theater_list' movie.id %}" class="btn btn-outline-primary btn-block">
-                        View Theaters <i class="fas fa-chevron-right ml-2"></i>
-                    </a>
-                    </div>
+                    </h5>
+
+                    <p class="card-text">
+                        <i class="fas fa-star text-warning"></i> {{ movie.rating }}
+                    </p>
+
+                    <p class="card-text">
+                        <small class="text-muted">
+                        <i class="fas fa-users"></i> Cast: {{ movie.cast }}
+                    </small>
+                    </p>
                 </div>
-        </div>
-        {% empty %}
-        <div class="col-12 text-center">
-            <p class="lead">No movies found. Try a different search term.</p>
+
+                <div class="card-footer bg-white border-top-0">
+                    <a href="{% url 'theater_list' movie.id %}" class="btn btn-outline-primary btn-block">
+                    View Theaters
+                </a>
+                </div>
+
+            </div>
         </div>
         {% endfor %}
     </div>
-</div>
 
-<!-- Bootstrap JS and dependencies -->
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
-<!-- Font Awesome -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
-<style>
-    .card {
-        transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-    }
-    
-    .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
-    }
-</style>
+    <style>
+        .card {
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        .card-img-top {
+            height: 300px;
+            object-fit: contain;
+            background-color: #000;
+            width: 100%;
+        }
+    </style>
 
-<script>
-    $(document).ready(function() {
-        // Add animation to cards on hover
-        $('.card').hover(
-            function() {
-                $(this).addClass('shadow');
-            },
-            function() {
-                $(this).removeClass('shadow');
-            }
-        );
-
-        // Implement client-side filtering
-        $('input[name="search"]').on('input', function() {
-            var searchTerm = $(this).val().toLowerCase();
-            $('#movieList .col-md-4').each(function() {
-                var movieTitle = $(this).find('.card-title').text().toLowerCase();
-                if (movieTitle.includes(searchTerm)) {
-                    $(this).show();
-                } else {
-                    $(this).hide();
+    <script>
+        $(document).ready(function() {
+            // Add animation to cards on hover
+            $('.card').hover(
+                function() {
+                    $(this).addClass('shadow');
+                },
+                function() {
+                    $(this).removeClass('shadow');
                 }
+            );
+
+            // Implement client-side filtering
+            $('input[name="search"]').on('input', function() {
+                var searchTerm = $(this).val().toLowerCase();
+                $('#movieList .col-md-4').each(function() {
+                    var movieTitle = $(this).find('.card-title').text().toLowerCase();
+                    if (movieTitle.includes(searchTerm)) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
             });
         });
-    });
-</script>
-<!-- <h1>Movies</h1>
+    </script>
+    <!-- <h1>Movies</h1>
 <ul>
     {% for movie in movies%}
     <li>
@@ -111,4 +119,4 @@
     </li>
     {% endfor %}
 </ul> -->
-{% endblock %}
+    {% endblock %}
