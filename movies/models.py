@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 import urllib.parse
+from django.utils import timezone
 
 
 
@@ -79,11 +80,19 @@ class Seat(models.Model):
         related_name="seats"
     )
     seat_number = models.CharField(max_length=10)
+
     is_booked = models.BooleanField(default=False)
+    reserved_until = models.DateTimeField(null=True, blank=True)
+
+    def is_available(self):
+        if self.is_booked:
+            return False
+        if self.reserved_until and self.reserved_until > timezone.now():
+            return False
+        return True
 
     def __str__(self):
         return f'{self.seat_number} in {self.theater.name}'
-
 
 class Booking(models.Model):
     user = models.ForeignKey(
