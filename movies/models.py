@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 import urllib.parse
 from django.utils import timezone
-
+import uuid
 
 
 def validate_youtube_url(value):
@@ -23,6 +23,25 @@ def validate_youtube_url(value):
 
     else:
         raise ValidationError("Enter a valid YouTube URL.")
+
+class Payment(models.Model):
+    booking = models.OneToOneField("Booking", on_delete = models.CASCADE,related_name="payment")
+    
+    razorpay_order_id = models.CharField(max_length=200)
+    razorpay_payment_id = models.CharField(max_length=200, null=True, blank=True)
+    razorpay_signature = models.TextField(null=True, blank=True)
+    
+    idempotency_key = models.UUIDField(default=uuid.uuid4, unique=True)
+    
+    status = models.CharField(max_length=20,
+                              choices=[("PENDING","pending"),
+                                       ("SUCCESS", "Success"),
+                                       ("FAILED", "Failed"),
+                                      ],
+                                        default="PENDING"
+                              )
+    created_at = models.DateTimeField(auto_now_add=True)
+
 
 
 class Movie(models.Model):
@@ -67,6 +86,8 @@ class Theater(models.Model):
         on_delete=models.CASCADE,
         related_name="theaters"
     )
+    rows = models.IntegerField(default=10)
+    seats_per_row = models.IntegerField(default=12)
     time = models.DateTimeField()
 
     def __str__(self):
@@ -95,22 +116,41 @@ class Seat(models.Model):
         return f'{self.seat_number} in {self.theater.name}'
 
 class Booking(models.Model):
+    
+    STATUS_CHOICES = (
+        ('PENDING', 'Pending'),
+        ('CONFIRMED', 'Confirmed'),
+    )
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name="user_bookings"
     )
-    seat = models.OneToOneField(Seat, on_delete=models.CASCADE)
+
+    seat = models.ForeignKey(   
+        Seat,
+        on_delete=models.CASCADE
+    )
+
     movie = models.ForeignKey(
         Movie,
         on_delete=models.CASCADE,
         related_name="movie_bookings"
     )
+
     theater = models.ForeignKey(
         Theater,
         on_delete=models.CASCADE,
         related_name="theater_bookings"
     )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='PENDING'
+    )
+
     booked_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

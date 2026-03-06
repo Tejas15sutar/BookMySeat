@@ -1,0 +1,94 @@
+{% extends "users/basic.html" %} {% block content %}
+
+<div class="card">
+    <div class="card-body">
+        <div class="container mt-5 text-center">
+
+            <h3>Complete Your Payment</h3>
+
+            <p>Booking ID: {{ booking.id }}</p>
+            <p>Movie Name: {{ booking.seat.theater.movie.name }}</p>
+            <p>Theater Name: {{ booking.seat.theater.name }}</p>
+            <p>Selected Seat: {{ booking.seat.seat_number }}</p>
+            <p>Total Amount: ₹{{ amount }}</p>
+
+            <button id="pay-btn" class="btn btn-success btn-lg">
+        Pay Now
+    </button>
+        </div>
+    </div>
+</div>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+    }
+    
+    .seat-wrapper {
+        display: inline-block;
+        margin: 3px;
+    }
+    
+    .seat {
+        width: 30px;
+        height: 30px;
+        border: 1px solid #28a745;
+        text-align: center;
+        line-height: 30px;
+        cursor: pointer;
+        border-radius: 5px;
+        transition: background-color 0.3s, color 0.3s, border 0.3s;
+    }
+    
+    .seat:hover {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .seat.selected {
+        border: 2px solid blue;
+        background-color: #cce5ff;
+        color: black;
+    }
+    
+    .seat.sold {
+        background-color: #ccc;
+        cursor: not-allowed;
+    }
+    
+    .screen {
+        margin: 20px 0;
+        background-color: #ccc;
+        height: 50px;
+        text-align: center;
+        line-height: 50px;
+        color: #666;
+    }
+</style>
+
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+    var options = {
+        "key": "{{ razorpay_key }}",
+        "amount": "{{ amount }}",
+        "currency": "INR",
+        "name": "BookMySeat",
+        "description": "Movie Ticket Payment",
+        "order_id": "{{ order_id }}",
+
+        "handler": function(response) {
+            alert("Payment Successful!");
+            window.location.href = "/profile/";
+        }
+    };
+
+    var rzp = new Razorpay(options);
+
+    document.getElementById("pay-btn").onclick = function(e) {
+        rzp.open();
+        e.preventDefault();
+    }
+</script>
+
+{% endblock %}

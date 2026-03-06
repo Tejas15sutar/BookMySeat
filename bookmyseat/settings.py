@@ -65,6 +65,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 ROOT_URLCONF = 'bookmyseat.urls'
 LOGIN_URL ='/login/'
 
+RAZORPAY_KEY_ID = "rzp_test_SNA0OYy7y2bvL5"
+RAZORPAY_KEY_SECRET = "azRlzX5BAMQymF3vEZ9A3KcM"
+RAZORPAY_WEBHOOK_SECRET = "Tejas@1507"
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',

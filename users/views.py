@@ -38,7 +38,7 @@ def login_view(request):
 
 @login_required
 def profile(request):
-    bookings =Booking.objects.filter(user = request.user)
+    bookings =Booking.objects.filter(user = request.user,status="CONFIRMED")
     if request.method == 'POST':
         u_form = UserUpdateForm(request.POST, instance = request.POST)
         if u_form.is_valid():
