@@ -1,16 +1,53 @@
-{% extends "users/basic.html" %} {% block content %} {% if movie.get_youtube_id %}
-<div class="text-center">
-    <img src="https://img.youtube.com/vi/{{ movie.get_youtube_id }}/hqdefault.jpg" class="img-fluid mb-3" alt="Trailer Thumbnail">
+{% extends "users/basic.html" %} {% block content %}
 
-    <br>
-    <div class="text-center">
-        <button type="submit" class="btn btn-success btn-lg">
-    <a href="https://www.youtube.com/watch?v={{ movie.get_youtube_id }}" target="_blank" class="btn btn-danger">
-        ▶ Watch Trailer on YouTube
-    </a> </button>
+<div class="container mt-5">
+
+    <div class="row align-items-center">
+
+        <!-- LEFT SIDE : Movie Details -->
+        <div class="col-md-6">
+
+            <h2 class="mb-3">{{ movie.name }}</h2>
+
+            <p>
+                <i class="fas fa-star text-warning"></i>
+                <strong>{{ movie.rating }}/10</strong>
+            </p>
+
+            <p>
+                <strong>Cast:</strong> {{ movie.cast }}
+            </p>
+
+            <p>
+                <strong>Description:</strong> {{ movie.description }}
+            </p>
+
+            <a href="{% url 'theater_list' movie.id %}" class="btn btn-primary btn-lg mt-3">
+                View Theaters
+            </a>
+
+        </div>
+
+
+        <!-- RIGHT SIDE : Trailer -->
+        <div class="col-md-6 text-center">
+
+            {% if movie.get_youtube_id %}
+
+            <img src="https://img.youtube.com/vi/{{ movie.get_youtube_id }}/hqdefault.jpg" class="img-fluid rounded shadow" alt="Trailer Thumbnail">
+
+            <br><br>
+
+            <a href="https://www.youtube.com/watch?v={{ movie.get_youtube_id }}" target="_blank" class="btn btn-danger btn-lg">
+                ▶ Watch Trailer
+            </a> {% else %}
+            <p>Trailer not available.</p>
+            {% endif %}
+
+        </div>
+
     </div>
-</div>
-{% else %}
-<p>Trailer not available.</p>
 
-{% endif %} {% endblock %}
+</div>
+
+{% endblock %}

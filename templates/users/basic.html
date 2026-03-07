@@ -111,7 +111,7 @@
                     <li class="nav-item"><a class="nav-link" href="/movies">Movies</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'profile' %}">Profile</a></li>
                     <li class="nav-item">
-                        <form method="post" action="{% url 'logout' %}">
+                        <form method="post" action="{% url 'logout' %}" onsubmit="return confirmLogout()">
                             {% csrf_token %}
                             <button type="submit" class="nav-link" style="border: none; background: none;">Logout</button>
                         </form>
@@ -164,6 +164,11 @@
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script>
+        function confirmLogout() {
+            return confirm("Are you sure you want to logout?");
+        }
+    </script>
 
 </body>
 
