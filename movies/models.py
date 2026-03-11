@@ -120,6 +120,7 @@ class Booking(models.Model):
     STATUS_CHOICES = (
         ('PENDING', 'Pending'),
         ('CONFIRMED', 'Confirmed'),
+        ('CANCELLED', 'Cancelled'),
     )
 
     user = models.ForeignKey(
@@ -128,7 +129,7 @@ class Booking(models.Model):
         related_name="user_bookings"
     )
 
-    seat = models.ForeignKey(   
+    seat = models.ForeignKey(
         Seat,
         on_delete=models.CASCADE
     )
@@ -145,13 +146,23 @@ class Booking(models.Model):
         related_name="theater_bookings"
     )
 
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default='PENDING'
+        default='PENDING',
+        db_index=True
     )
 
-    booked_at = models.DateTimeField(auto_now_add=True)
+    booked_at = models.DateTimeField(
+        auto_now_add=True,
+        db_index=True
+    )
 
     def __str__(self):
         return f'Booking by {self.user.username} for {self.seat.seat_number} at {self.theater.name}'

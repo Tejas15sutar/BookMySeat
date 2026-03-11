@@ -11,6 +11,13 @@ import razorpay
 import json
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
+from django.contrib.auth.decorators import user_passes_test
+from django.db.models import Sum, Count
+from django.db.models.functions import ExtractHour
+from django.core.cache import cache
+
+def admin_check(user):
+    return user.is_staff
 
 
 @csrf_exempt
@@ -241,3 +248,80 @@ def create_payment(request, booking_id):
         "razorpay_key": settings.RAZORPAY_KEY_ID,
         "amount": amount
     })
+    
+    
+@login_required
+@user_passes_test(admin_check)
+def admin_dashboard(request):
+
+    data = cache.get("admin_dashboard_data")
+
+    if not data:
+
+        today = timezone.now().date()
+
+        # Daily revenue
+        daily_revenue = Booking.objects.filter(
+            booked_at__date=today,
+            status="CONFIRMED"
+        ).aggregate(total=Sum("amount"))["total"] or 0
+
+        # Weekly revenue
+        weekly_revenue = Booking.objects.filter(
+            booked_at__gte=today - timedelta(days=7),
+            status="CONFIRMED"
+        ).aggregate(total=Sum("amount"))["total"] or 0
+
+        # Monthly revenue
+        monthly_revenue = Booking.objects.filter(
+            booked_at__month=today.month,
+            status="CONFIRMED"
+        ).aggregate(total=Sum("amount"))["total"] or 0
+
+        # Most popular movies
+        popular_movies = Booking.objects.values(
+            "movie__name"
+        ).annotate(
+            total_bookings=Count("id")
+        ).order_by("-total_bookings")[:5]
+
+        # Busiest theaters
+        busiest_theaters = Booking.objects.values(
+            "theater__name"
+        ).annotate(
+            total_bookings=Count("id")
+        ).order_by("-total_bookings")[:5]
+
+        # Peak booking hours
+        peak_hours = Booking.objects.annotate(
+            hour=ExtractHour("booked_at")
+        ).values("hour").annotate(
+            total=Count("id")
+        ).order_by("-total")[:5]
+
+        # Cancellation rate
+        total_bookings = Booking.objects.count()
+
+        cancelled_bookings = Booking.objects.filter(
+            status="CANCELLED"
+        ).count()
+
+        cancellation_rate = 0
+
+        if total_bookings > 0:
+            cancellation_rate = (cancelled_bookings / total_bookings) * 100
+
+        data = {
+            "daily_revenue": daily_revenue,
+            "weekly_revenue": weekly_revenue,
+            "monthly_revenue": monthly_revenue,
+            "popular_movies": popular_movies,
+            "busiest_theaters": busiest_theaters,
+            "peak_hours": peak_hours,
+            "cancellation_rate": cancellation_rate,
+        }
+
+        # Cache for 5 minutes
+        cache.set("admin_dashboard_data", data, 300)
+
+    return render(request, "admin/dashboard.html", data)

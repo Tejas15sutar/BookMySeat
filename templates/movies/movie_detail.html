@@ -19,7 +19,7 @@
             </p>
 
             <p>
-                <strong>Description:</strong> {{ movie.description }}
+                <strong>Description:</strong> {{ movie.description |truncatechars:300 }}
             </p>
 
             <a href="{% url 'theater_list' movie.id %}" class="btn btn-primary btn-lg mt-3">

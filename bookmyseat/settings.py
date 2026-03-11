@@ -69,6 +69,13 @@ RAZORPAY_KEY_ID = "rzp_test_SNA0OYy7y2bvL5"
 RAZORPAY_KEY_SECRET = "azRlzX5BAMQymF3vEZ9A3KcM"
 RAZORPAY_WEBHOOK_SECRET = "Tejas@1507"
 
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "admin-dashboard-cache",
+    }
+}
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',

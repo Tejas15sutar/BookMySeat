@@ -8,4 +8,5 @@ urlpatterns=[
     path('confirm-booking/<int:seat_id>/', views.confirm_booking, name='confirm_booking'),
     path("create-payment/<int:booking_id>/", views.create_payment, name="create_payment"),
     path("payment/webhook/", views.payment_webhook),
+    path("admin-dashboard/", views.admin_dashboard, name="admin_dashboard"),
 ]
