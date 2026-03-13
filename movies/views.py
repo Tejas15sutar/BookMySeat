@@ -1,5 +1,5 @@
 from django.shortcuts import render , redirect , get_object_or_404
-from .models import Movie,Theater,Seat,Booking, Payment
+from .models import Movie,Theater,Seat,Booking, Payment ,Language
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
 from django.db import transaction
@@ -15,6 +15,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.db.models import Sum, Count
 from django.db.models.functions import ExtractHour
 from django.core.cache import cache
+from django.core.paginator import Paginator
 
 def admin_check(user):
     return user.is_staff
@@ -111,16 +112,60 @@ def confirm_booking(request, seat_id):
         return JsonResponse({"error": "Seat not found"}, status=404)
 
 
+from django.shortcuts import render
+from django.core.paginator import Paginator
+from django.db.models import Count
+from .models import Movie, Language
+
+
 def movie_list(request):
     search_query = request.GET.get('search')
+    genres = request.GET.getlist('genre')
+    languages = request.GET.getlist('language')
+    sort = request.GET.get('sort', 'name')
 
+    movies = Movie.objects.all()
+
+    
     if search_query:
-        movies = Movie.objects.filter(name__icontains=search_query)
-    else:
-        movies = Movie.objects.all()
+        movies = movies.filter(name__icontains=search_query)
 
-    return render(request, 'movies/movie_list.html',{'movies':movies})
+    
+    if genres:
+        movies = movies.filter(genre__name__in=genres)
 
+    
+    if languages:
+        movies = movies.filter(language__name__in=languages)
+
+    
+    movies = movies.distinct()
+
+    
+    genre_counts = movies.exclude(genre__name__isnull=True).values(
+    'genre__name'
+).annotate(
+    count=Count('id')
+)
+
+    
+    allowed_sort = ['name', 'release_date', '-release_date', 'rating', '-rating']
+    if sort in allowed_sort:
+        movies = movies.order_by(sort)
+
+    
+    movies = movies.select_related('language').prefetch_related('genre')
+
+    
+    paginator = Paginator(movies, 8)
+    page = request.GET.get('page')
+    movies = paginator.get_page(page)
+
+    return render(request, 'movies/movie_list.html', {
+        'movies': movies,
+        'genre_counts': genre_counts,
+        'languages': Language.objects.all()
+    })
 
 def movie_detail(request, movie_id):
     movie = get_object_or_404(Movie, id=movie_id)

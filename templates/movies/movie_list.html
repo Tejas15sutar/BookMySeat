@@ -1,150 +1,238 @@
 {% extends "users/basic.html" %} {% block content %}
-<div class="container py-5">
-    <h1 class="text-center mb-5">Movies</h1>
 
+<div class="container py-5">
+
+    <h1 class="text-center mb-4">Movies</h1>
+
+    <!-- SEARCH BAR -->
     <div class="row justify-content-center mb-5">
         <div class="col-md-8">
-            <form method="GET" action="{% url 'movie_list' %}" class="search-bar">
+            <form method="GET" action="{% url 'movie_list' %}">
                 <div class="input-group">
-                    <input class="form-control form-control-lg" name="search" placeholder="Search for Movies, Events, Plays, Sports and Activities" type="text" value="{{ request.GET.search|default_if_none:'' }}" aria-label="Search for movies" />
-                    <div class="input-group-append">
-                        <button class="btn btn-primary" type="submit">
-                            <i class="fas fa-search"></i> Search
-                        </button>
-                    </div>
+                    <input class="form-control form-control-lg" name="search" placeholder="Search movies..." type="text" value="{{ request.GET.search }}">
+
+                    <button class="btn btn-primary">
+                        <i class="fas fa-search"></i> Search
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div class="row" id="movieList">
-        {% for movie in movies %}
-        <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-4">
+    <div class="row">
 
-            <div class="card h-100 shadow-sm">
+        <!-- FILTER SIDEBAR -->
+        <div class="col-md-3">
 
-                <a href="{% url 'movie_detail' movie.id %}">
-                    <div class="poster-container">
-                        <img src="{{ movie.image.url }}" alt="{{ movie.name }}">
-                    </div>
-                </a>
+            <div class="filter-box">
 
-                <div class="card-body">
-                    <h5 class="card-title">
-                        <a href="{% url 'movie_detail' movie.id %}" class="text-dark">
-                        {{ movie.name }}
-                    </a>
-                    </h5>
+                <form method="GET">
 
-                    <p class="card-text">
-                        <i class="fas fa-star text-warning"></i> {{ movie.rating }}
-                    </p>
+                    <!-- GENRE DROPDOWN -->
+                    <!-- <h5 class="filter-title">Genre</h5> -->
 
-                    <p class="card-text">
-                        <small class="text-muted">
-                        <i class="fas fa-users"></i> Cast: {{ movie.cast|truncatechars:80 }}
-                    </small>
-                    </p>
-                </div>
+                    <select class="form-control mb-3" name="genre">
+                <option value=""> Genres</option>
 
-                <div class="card-footer bg-white border-top-0 text-center">
-                    <a href="{% url 'theater_list' movie.id %}" class="btn btn-outline-primary btn-sm">
-                    View Theaters
-                </a>
-                </div>
+                {% for genre in genre_counts %}
+                    {% if genre.genre__name %}
+                    <option value="{{ genre.genre__name }}"
+                        {% if request.GET.genre == genre.genre__name %}selected{% endif %}>
+                        {{ genre.genre__name }} ({{ genre.count }})
+                    </option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+
+
+                    <!-- LANGUAGE DROPDOWN -->
+                    <!-- <h5 class="filter-title">Language</h5> -->
+
+                    <select class="form-control mb-3" name="language">
+
+                <option value="">Languages</option>
+
+                {% for language in languages %}
+                <option value="{{ language.name }}"
+                    {% if request.GET.language == language.name %}selected{% endif %}>
+                    {{ language.name }}
+                </option>
+                {% endfor %}
+
+            </select>
+
+
+                    <button class="btn btn-primary w-100 mt-2">
+                Apply Filters
+            </button>
+
+                </form>
 
             </div>
+
         </div>
-        {% endfor %}
+
+        <!-- MOVIES GRID -->
+        <div class="col-md-9">
+
+            <div class="row" id="movieList">
+
+                {% for movie in movies %}
+
+                <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+
+                    <div class="card h-100 shadow-sm">
+
+                        <a href="{% url 'movie_detail' movie.id %}">
+                            <div class="poster-container">
+                                <img src="{{ movie.image.url }}" alt="{{ movie.name }}">
+                            </div>
+                        </a>
+
+                        <div class="card-body">
+
+                            <h6 class="card-title">
+                                <a href="{% url 'movie_detail' movie.id %}" class="text-dark">
+                                    {{ movie.name }}
+                                </a>
+                            </h6>
+
+                            <p class="card-text">
+                                ⭐ {{ movie.rating }}
+                            </p>
+
+                            <small class="text-muted">
+                                Cast: {{ movie.cast|truncatechars:50 }}
+                            </small>
+
+                        </div>
+
+                        <div class="card-footer bg-white text-center">
+
+                            <a href="{% url 'theater_list' movie.id %}" class="btn btn-outline-primary btn-sm">
+                                View Theaters
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                {% empty %}
+
+                <p>No movies found.</p>
+
+                {% endfor %}
+
+            </div>
+
+            <!-- PAGINATION -->
+
+            <div class="d-flex justify-content-center mt-4">
+
+                <nav>
+
+                    <ul class="pagination">
+
+                        {% if movies.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ movies.previous_page_number }}">
+                                Previous
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">
+                                {{ movies.number }}
+                            </span>
+                        </li>
+
+                        {% if movies.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ movies.next_page_number }}">
+                                Next
+                            </a>
+                        </li>
+                        {% endif %}
+
+                    </ul>
+
+                </nav>
+
+            </div>
+
+        </div>
+
     </div>
 
-    <!-- Bootstrap JS and dependencies -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</div>
 
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
-    <style>
-        .card {
-            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-            overflow: hidden;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
-        }
-        
-        .card-img-top {
-            width: 100%;
-            height: 350px;
-            object-fit: cover;
-        }
-        
-        .poster-container {
-            width: 100%;
-            height: 260px;
-            overflow: hidden;
-            border-radius: 8px;
-        }
-        
-        .poster-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .card-body {
-            padding: 10px;
-        }
-        
-        .card-title {
-            font-size: 14px;
-            margin-bottom: 5px;
-        }
-        
-        .card-text {
-            font-size: 13px;
-        }
-    </style>
+<!-- CSS -->
 
-    <script>
-        $(document).ready(function() {
-            // Add animation to cards on hover
-            $('.card').hover(
-                function() {
-                    $(this).addClass('shadow');
-                },
-                function() {
-                    $(this).removeClass('shadow');
+<style>
+    .card {
+        transition: 0.3s;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .poster-container {
+        height: 300px;
+        overflow: hidden;
+    }
+    
+    .poster-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .filter-box {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .filter-title {
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+</style>
+
+
+<!-- JS -->
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+
+        const searchInput = document.querySelector("input[name='search']");
+
+        searchInput.addEventListener("input", function() {
+
+            let value = this.value.toLowerCase();
+            let movies = document.querySelectorAll("#movieList .col-lg-3");
+
+            movies.forEach(function(movie) {
+
+                let title = movie.innerText.toLowerCase();
+
+                if (title.includes(value)) {
+                    movie.style.display = "block";
+                } else {
+                    movie.style.display = "none";
                 }
-            );
 
-            // Implement client-side filtering
-            $('input[name="search"]').on('input', function() {
-                var searchTerm = $(this).val().toLowerCase();
-                $('#movieList .col-md-4').each(function() {
-                    var movieTitle = $(this).find('.card-title').text().toLowerCase();
-                    if (movieTitle.includes(searchTerm)) {
-                        $(this).show();
-                    } else {
-                        $(this).hide();
-                    }
-                });
             });
+
         });
-    </script>
-    <!-- <h1>Movies</h1>
-<ul>
-    {% for movie in movies%}
-    <li>
-        <img src="{{movie.image.url}}" alt="image" >
-        <strong>{{movie.name}}</strong>{{movie.rating}}
-        <p>Cast:{{movie.cast}}</p>
-        <a href="{% url 'theater_list' movie.id %}">View Theaters</a>
-    </li>
-    {% endfor %}
-</ul> -->
-    {% endblock %}
+
+    });
+</script>
+
+{% endblock %}

@@ -43,11 +43,24 @@ class Payment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 
+class Genre(models.Model):
+    name = models.CharField(max_length= 100, unique = True, db_index = True)
+    
+    def __str__(self):
+        return self.name
 
+class Language(models.Model):
+    name = models.CharField(max_length= 100, unique = True, db_index = True)
+    
+    def __str__(self):
+        return self.name
+    
 class Movie(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, db_index=True)
+    genre = models.ManyToManyField(Genre, related_name= "movies")
+    language = models.ForeignKey(Language, on_delete=models.CASCADE, null=True,blank=True)
     image = models.ImageField(upload_to="movies/")
-    rating = models.DecimalField(max_digits=3, decimal_places=1)
+    rating = models.DecimalField(max_digits=3, decimal_places=1, db_index=True)
     cast = models.TextField()
     description = models.TextField(blank=True, null=True)
 
