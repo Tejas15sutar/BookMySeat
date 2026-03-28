@@ -1,0 +1,230 @@
+{% extends "users/basic.html" %} {% block content %}
+
+<style>
+    .dashboard-title {
+        font-size: 28px;
+        font-weight: bold;
+        margin-bottom: 30px;
+    }
+    
+    .analytics-card {
+        border: none;
+        border-radius: 10px;
+        transition: 0.3s;
+    }
+    
+    .analytics-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .section-title {
+        font-size: 22px;
+        font-weight: bold;
+        margin: 30px 0 15px;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 8px;
+    }
+    
+    .table {
+        background: white;
+    }
+</style>
+
+
+<div class="container mt-4">
+
+    <h2 class="dashboard-title text-center">Admin Analytics Dashboard</h2>
+
+
+    <!-- Revenue Cards -->
+
+    <div class="row text-center">
+
+        <div class="col-md-4">
+
+            <div class="card analytics-card shadow-sm">
+
+                <div class="card-body">
+
+                    <h5>Daily Revenue</h5>
+
+                    <h3 class="text-success">₹{{ daily_revenue }}</h3>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-4">
+
+            <div class="card analytics-card shadow-sm">
+
+                <div class="card-body">
+
+                    <h5>Weekly Revenue</h5>
+
+                    <h3 class="text-primary">₹{{ weekly_revenue }}</h3>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-4">
+
+            <div class="card analytics-card shadow-sm">
+
+                <div class="card-body">
+
+                    <h5>Monthly Revenue</h5>
+
+                    <h3 class="text-warning">₹{{ monthly_revenue }}</h3>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- Popular Movies -->
+
+    <div class="section-title">Most Popular Movies</div>
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <table class="table table-striped">
+
+                <thead>
+
+                    <tr>
+                        <th>Movie</th>
+                        <th>Total Bookings</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for movie in popular_movies %}
+
+                    <tr>
+                        <td>{{ movie.movie__name }}</td>
+                        <td>{{ movie.total_bookings }}</td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- Busiest Theaters -->
+
+    <div class="section-title">Busiest Theaters</div>
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <table class="table table-striped">
+
+                <thead>
+
+                    <tr>
+                        <th>Theater</th>
+                        <th>Total Bookings</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for theater in busiest_theaters %}
+
+                    <tr>
+                        <td>{{ theater.theater__name }}</td>
+                        <td>{{ theater.total_bookings }}</td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- Peak Booking Hours -->
+
+    <div class="section-title">Peak Booking Hours</div>
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <ul class="list-group">
+
+                {% for hour in peak_hours %}
+
+                <li class="list-group-item">
+
+                    {{ hour.hour }}:00 → {{ hour.total }} bookings
+
+                </li>
+
+                {% endfor %}
+
+            </ul>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- Cancellation Rate -->
+
+    <div class="section-title">Cancellation Rate</div>
+
+    <div class="card analytics-card shadow-sm text-center">
+
+        <div class="card-body">
+
+            <h3 class="text-danger">
+
+                {{ cancellation_rate|floatformat:2 }}%
+
+            </h3>
+
+            <p>Total cancelled bookings percentage</p>
+
+        </div>
+
+    </div>
+
+
+
+</div>
+
+{% endblock %}

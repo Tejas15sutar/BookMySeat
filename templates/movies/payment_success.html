@@ -1,0 +1,15 @@
+<h2>Payment Successful 🎉</h2>
+
+<p><strong>Movie:</strong> {{ movie.name }}</p>
+<p><strong>Theater:</strong> {{ theater.name }}</p>
+
+<h3>Booked Seats:</h3>
+<ul>
+    {% for booking in bookings %}
+    <li>
+        Seat: {{ booking.seat.seat_number }} | User: {{ booking.user.username }} | Status: {{ booking.status }}
+    </li>
+    {% endfor %}
+</ul>
+
+<p><strong>Total Amount:</strong> ₹{{ total_amount }}</p>

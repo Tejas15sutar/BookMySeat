@@ -1,0 +1,159 @@
+{% extends "users/basic.html" %} {% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Movie and Theater Info -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <div>
+                            <h4 class="card-title">{{ theater.movie.name }}</h4>
+                            <p class="card-text text-muted">
+                                {{ theater.name }} | {{ theater.time }}
+                            </p>
+                        </div>
+                        <a href="1q`2"></a>
+                        <div class="mt-2 mt-sm-0">
+                            <button class="btn btn-outline-primary me-2 mb-2 mb-sm-0">2D</button>
+                            <button class="btn btn-outline-primary me-2 mb-2 mb-sm-0">3D</button>
+                            <button class="btn btn-outline-primary mb-2 mb-sm-0">IMAX 3D</button>
+                            <button class="btn btn-outline-primary mb-2 mb-sm-0">{{seats|length}} Tickets</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seat Selection -->
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title text-center mb-4">Select Your Seats</h5>
+                    <div class="screen">SCREEN!</div>
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-center flex-wrap mb-4">
+
+                            {% for item in seats %} {% with seat=item.seat status=item.status %}
+
+                            <div class="seat-wrapper">
+
+                                {% if status == "available" %}
+                                <input type="checkbox" name="seats" value="{{ seat.id }}" class="d-none" id="seat-{{ seat.id }}" />
+                                <label for="seat-{{ seat.id }}" class="seat">
+                    {{ seat.seat_number }}
+                </label> {% elif status == "locked" %}
+                                <div class="seat locked">
+                                    {{ seat.seat_number }}
+                                </div>
+
+                                {% else %}
+                                <div class="seat sold">
+                                    {{ seat.seat_number }}
+                                </div>
+                                {% endif %}
+
+                            </div>
+
+                            {% endwith %} {% endfor %}
+
+                        </div>
+                </div>
+
+                <!-- Seat Legend -->
+                <div class="d-flex justify-content-center mb-4">
+                    <div class="d-flex align-items-center me-4">
+                        <div class="seat" style="background-color: white"></div>
+                        <span class="ms-2">Available</span>
+                    </div>
+                    <div class="d-flex align-items-center me-4">
+                        <div class="seat selected"></div>
+                        <span class="ms-2">Selected</span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div class="seat sold"></div>
+                        <span class="ms-2">Sold</span>
+                    </div>
+                    <div class="d-flex align-items-center me-4">
+                        <div class="seat locked"></div>
+                        <span class="ms-2">Locked</span>
+                    </div>
+                </div>
+
+                <!-- Book Button -->
+                <div class="text-center">
+                    <button type="submit" class="btn btn-success btn-lg">Book Selected Seats</button>
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+    }
+    
+    .seat-wrapper {
+        display: inline-block;
+        margin: 3px;
+    }
+    
+    .seat {
+        width: 30px;
+        height: 30px;
+        border: 1px solid #28a745;
+        text-align: center;
+        line-height: 30px;
+        cursor: pointer;
+        border-radius: 5px;
+        transition: background-color 0.3s, color 0.3s, border 0.3s;
+    }
+    
+    .seat:hover {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .seat.selected {
+        border: 2px solid blue;
+        background-color: #cce5ff;
+        color: black;
+    }
+    
+    .seat.sold {
+        background-color: #ccc;
+        cursor: not-allowed;
+    }
+    
+    .screen {
+        margin: 20px 0;
+        background-color: #ccc;
+        height: 50px;
+        text-align: center;
+        line-height: 50px;
+        color: #666;
+    }
+    
+    .seat.locked {
+        background-color: #f8d87b;
+        border: 1px solid #f6d574;
+        cursor: not-allowed;
+    }
+</style>
+
+<script>
+    document.querySelectorAll('.seat-wrapper input[type="checkbox"]').forEach(function(checkbox) {
+        checkbox.addEventListener('change', function() {
+            const label = this.nextElementSibling;
+            if (this.checked) {
+                label.classList.add('selected');
+            } else {
+                label.classList.remove('selected');
+            }
+        });
+    });
+</script>
+
+{% endblock %}

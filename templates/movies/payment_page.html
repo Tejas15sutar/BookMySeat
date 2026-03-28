@@ -1,0 +1,212 @@
+{% extends "users/basic.html" %} {% block content %}
+
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 85vh;">
+
+    <div class="payment-card shadow">
+
+        <!-- HEADER -->
+        <div class="card-header text-center">
+            <h4>Complete Your Payment</h4>
+        </div>
+
+        <!-- BODY -->
+        <div class="card-body">
+
+            <!-- BOOKING INFO -->
+            <div class="info-row">
+                <span>Booking ID</span>
+                <strong>#{{ primary_booking.id }}</strong>
+            </div>
+
+            <div class="info-row">
+                <span>Movie</span>
+                <strong>{{ movie.name }}</strong>
+            </div>
+
+            <div class="info-row">
+                <span>Theater</span>
+                <strong>{{ theater.name }}</strong>
+            </div>
+
+            <!-- SEATS -->
+            <div class="info-row align-items-start">
+                <span>Seats</span>
+                <div>
+                    {% for seat in seats %}
+                    <span class="seat-badge">{{ seat }}</span> {% endfor %}
+                </div>
+            </div>
+
+            <hr>
+
+            <!-- TOTAL -->
+            <div class="total-box">
+                <span>Total Amount</span>
+                <h3>₹{{ total_amount }}</h3>
+            </div>
+
+            <!-- PAY BUTTON -->
+            <button id="pay-btn" class="pay-btn">Pay Now</button>
+
+
+        </div>
+    </div>
+
+</div>
+
+
+<style>
+    .payment-card {
+        width: 100%;
+        max-width: 420px;
+        border-radius: 15px;
+        background: #fff;
+        overflow: hidden;
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, #28a745, #218838);
+        color: white;
+        padding: 15px;
+    }
+    
+    .card-body {
+        padding: 20px;
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        font-size: 15px;
+    }
+    
+    .info-row span {
+        color: #666;
+    }
+    
+    .info-row strong {
+        color: #000;
+    }
+    
+    .seat-badge {
+        display: inline-block;
+        background: #96c8fd;
+        color: white;
+        padding: 5px 10px;
+        margin: 3px;
+        border-radius: 6px;
+        font-size: 13px;
+    }
+    
+    .total-box {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 20px 0;
+    }
+    
+    .total-box h3 {
+        color: #28a745;
+        margin: 0;
+    }
+    
+    .pay-btn {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 10px;
+        background: #28a745;
+        color: white;
+        font-size: 16px;
+        transition: 0.3s;
+    }
+    
+    .pay-btn:hover {
+        background: #218838;
+        transform: scale(1.03);
+    }
+</style>
+
+<!-- RAZORPAY -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<button id="pay-btn">Pay Now</button>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+
+        var payBtn = document.getElementById("pay-btn");
+
+        payBtn.addEventListener("click", function(e) {
+            e.preventDefault();
+
+            if (!"{{ order_id }}") {
+                alert("Order ID missing!");
+                return;
+            }
+
+            var options = {
+                "key": "{{ razorpay_key }}",
+                "amount": "{{ amount }}",
+                "currency": "INR",
+                "name": "BookMySeat",
+                "description": "Movie Ticket Payment",
+                "order_id": "{{ order_id }}",
+
+                "prefill": {
+                    "name": "Tejas Sutar",
+                    "email": "tejassutar1515@gmail.com",
+                    "contact": "9975828128"
+                },
+                "redirect": false,
+
+                handler: function(response) {
+
+                    fetch("/payment-success/", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRFToken": "{{ csrf_token }}"
+                            },
+                            body: JSON.stringify({
+                                payment_id: response.razorpay_payment_id,
+                                order_id: response.razorpay_order_id,
+                                signature: response.razorpay_signature
+                            })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.status === "success") {
+                                window.location.href = "/profile/";
+                            } else {
+                                alert("Payment verification failed");
+                            }
+                        });
+                },
+
+                "modal": {
+                    "ondismiss": function() {
+                        alert("Payment cancelled.");
+                    },
+                    "escape": false
+                },
+
+                "theme": {
+                    "color": "#28a745"
+                }
+            };
+
+            var rzp = new Razorpay(options);
+
+            rzp.on('payment.failed', function(response) {
+                console.log("FULL ERROR:", response);
+                alert("Error: " + response.error.description);
+            });
+
+            rzp.open();
+        });
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,278 @@
+{% extends "users/basic.html" %} {% block content %}
+
+<div class="container py-5">
+
+    <h1 class="text-center mb-4">Movies</h1>
+
+    <!-- SEARCH BAR -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-8">
+            <form method="GET" action="{% url 'movie_list' %}">
+                <div class="input-group">
+                    <input class="form-control form-control-lg" name="search" placeholder="Search movies..." type="text" value="{{ request.GET.search }}">
+
+                    <button class="btn btn-primary">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row">
+
+        <!-- FILTER SIDEBAR -->
+        <div class="col-md-3">
+
+            <div class="filter-box">
+
+                <form method="GET">
+
+                    <!-- GENRE DROPDOWN -->
+                    <!-- <h5 class="filter-title">Genre</h5> -->
+
+                    <select class="form-control mb-3" name="genre">
+                <option value=""> Genres</option>
+
+                {% for genre in genre_counts %}
+                    {% if genre.genre__name %}
+                    <option value="{{ genre.genre__name }}"
+                        {% if request.GET.genre == genre.genre__name %}selected{% endif %}>
+                        {{ genre.genre__name }} ({{ genre.count }})
+                    </option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+
+
+                    <!-- LANGUAGE DROPDOWN -->
+                    <!-- <h5 class="filter-title">Language</h5> -->
+
+                    <select class="form-control mb-3" name="language">
+
+                <option value="">Languages</option>
+
+                {% for language in languages %}
+                <option value="{{ language.name }}"
+                    {% if request.GET.language == language.name %}selected{% endif %}>
+                    {{ language.name }}
+                </option>
+                {% endfor %}
+
+            </select>
+
+
+                    <button class="btn btn-primary w-100 mt-2">
+                Apply Filters
+            </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+        <!-- MOVIES GRID -->
+        <div class="col-md-9">
+
+            <div class="row" id="movieList">
+
+                {% for movie in movies %}
+
+                <div class="col-lg-3 col-md-4 col-sm-6 col-6 mb-4">
+
+                    <div class="movie-card">
+
+                        <a href="{% url 'movie_detail' movie.id %}">
+                            <img src="{{ movie.image.url }}" class="movie-poster" alt="{{ movie.name }}">
+                        </a>
+
+                        <div class="rating-bar">
+                            ⭐ {{ movie.rating }}/10
+                        </div>
+
+                        <h6 class="movie-title mt-2">
+                            {{ movie.name }}
+                        </h6>
+
+                        <div class="text-center mt-2">
+                            <a href="{% url 'theater_list' movie.id %}" class="btn btn-outline-primary btn-sm">
+                        View Theaters
+                    </a>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                {% empty %}
+                <div class="col-12 text-center mt-5">
+
+                    <h4 class="text-danger">No movies found!</h4>
+                    <p>Try changing filters or search again.</p>
+
+                    <!-- Clear Filters -->
+                    <a href="{% url 'movie_list' %}" class="btn btn-warning mt-2">
+        Clear Filters
+    </a>
+
+                    <!-- Back Button -->
+                    <button onclick="window.history.back()" class="btn btn-secondary mt-2">
+        ⬅ Go Back
+    </button>
+
+                </div>
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+        <!-- PAGINATION -->
+
+        <div class="d-flex justify-content-center mt-4">
+
+            <nav>
+
+                <ul class="pagination">
+
+                    {% if movies.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ movies.previous_page_number }}">
+                                Previous
+                            </a>
+                    </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link">
+                                {{ movies.number }}
+                            </span>
+                    </li>
+
+                    {% if movies.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ movies.next_page_number }}">
+                                Next
+                            </a>
+                    </li>
+                    {% endif %}
+
+                </ul>
+
+            </nav>
+
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+
+
+<!-- CSS -->
+
+<style>
+    .card {
+        transition: 0.3s;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .poster-container {
+        height: 300px;
+        overflow: hidden;
+    }
+    
+    .poster-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .filter-box {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .filter-title {
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+    
+    .movie-card {
+        border: 1px solid #e5e5e5;
+        border-radius: 12px;
+        overflow: hidden;
+        background: white;
+        text-align: center;
+        transition: all 0.3s ease;
+        padding-bottom: 10px;
+    }
+    
+    .movie-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .movie-poster {
+        width: 100%;
+        height: 270px;
+        object-fit: cover;
+    }
+    
+    .rating-bar {
+        background: #1c1c1c;
+        color: #ffc107;
+        font-size: 13px;
+        padding: 6px;
+        font-weight: 500;
+    }
+    
+    .movie-title {
+        font-size: 15px;
+        font-weight: 600;
+        margin-top: 8px;
+    }
+    
+    .movie-card .btn {
+        margin-top: 6px;
+    }
+</style>
+
+
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+
+        const searchInput = document.querySelector("input[name='search']");
+
+        searchInput.addEventListener("input", function() {
+
+            let value = this.value.toLowerCase();
+            let movies = document.querySelectorAll("#movieList .col-lg-3");
+
+            movies.forEach(function(movie) {
+
+                let title = movie.innerText.toLowerCase();
+
+                if (title.includes(value)) {
+                    movie.style.display = "block";
+                } else {
+                    movie.style.display = "none";
+                }
+
+            });
+
+        });
+
+    });
+</script>
+
+{% endblock %}
