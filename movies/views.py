@@ -81,19 +81,20 @@ def payment_success(request):
                 auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
             )
 
-           
             client.utility.verify_payment_signature({
                 'razorpay_order_id': order_id,
                 'razorpay_payment_id': payment_id,
                 'razorpay_signature': signature
             })
 
-            payment = Payment.objects.select_for_update().get(
-                razorpay_order_id=order_id,
-                status="PENDING"
-            )
-
             with transaction.atomic():
+                payment = Payment.objects.select_for_update().get(
+                    razorpay_order_id=order_id
+                )
+
+                
+                if payment.status == "SUCCESS":
+                    return JsonResponse({"status": "already processed"})
 
                 payment.razorpay_payment_id = payment_id
                 payment.status = "SUCCESS"
@@ -138,34 +139,6 @@ def reserve_seat(request, seat_id):
 
 def send_email_async(data):
     send_ticket_email(data)
-@transaction.atomic
-def confirm_booking(request, seat_id):
-    try:
-        seat = Seat.objects.select_for_update().get(id=seat_id)
-
-        if seat.reserved_until and seat.reserved_until > timezone.now():
-            seat.is_booked = True
-            seat.reserved_until = None
-            seat.save()
-            
-            booking_data = {
-                "booking": {"id": seat.id},
-                "movie": {"name": seat.theater.movie.name if hasattr(seat.theater, 'movie') else "Movie"},
-                "theater": {"name": seat.theater.name},
-                "seats": seat.seat_number,
-                "payment_id": "PAY123456",  
-                "email": request.user.email if request.user.is_authenticated else "test@gmail.com"
-            }
-
-            
-            threading.Thread(target=send_email_async, args=(booking_data,)).start()
-
-            return JsonResponse({"message": "Seat booked successfully"})
-
-        return JsonResponse({"error": "Reservation expired"}, status=400)
-
-    except Seat.DoesNotExist:
-        return JsonResponse({"error": "Seat not found"}, status=404)
 
 
 def movie_list(request):
@@ -304,7 +277,8 @@ def book_seats(request, theater_id):
                     seat=seat,
                     movie=theaters.movie,
                     theater=theaters,
-                    status="PENDING"
+                    status="PENDING",
+                    amount=200 
                 )
 
                 created_bookings.append(booking)
@@ -350,7 +324,10 @@ def create_payment(request):
     })
 
     # create Payment and link all bookings
-    payment = Payment.objects.create(razorpay_order_id=order["id"])
+    payment = Payment.objects.create(
+    razorpay_order_id=order["id"],
+    user=request.user   
+    )
     payment.bookings.set(bookings)
     payment.save()
 
