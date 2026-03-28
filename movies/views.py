@@ -69,53 +69,70 @@ def payment_webhook(request):
 
 @csrf_exempt
 def payment_success(request):
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
+    if request.method != "POST":
+        return JsonResponse({"status": "invalid request"}, status=400)
 
-            order_id = data.get("order_id")
-            payment_id = data.get("payment_id")
-            signature = data.get("signature")
+    try:
+        data = json.loads(request.body)
 
-            client = razorpay.Client(
-                auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
+        payment_id = data.get("razorpay_payment_id")
+        order_id = data.get("razorpay_order_id")
+        signature = data.get("razorpay_signature")
+
+        if not payment_id or not order_id:
+            return JsonResponse({"status": "failed", "message": "Missing data"}, status=400)
+
+        client = razorpay.Client(
+            auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
+        )
+
+        # VERIFY SIGNATURE
+        client.utility.verify_payment_signature({
+            "razorpay_order_id": order_id,
+            "razorpay_payment_id": payment_id,
+            "razorpay_signature": signature
+        })
+
+        with transaction.atomic():
+            payment = Payment.objects.select_for_update().get(
+                razorpay_order_id=order_id
             )
 
-            client.utility.verify_payment_signature({
-                'razorpay_order_id': order_id,
-                'razorpay_payment_id': payment_id,
-                'razorpay_signature': signature
-            })
+            # prevent double processing
+            if payment.status == "SUCCESS":
+                return JsonResponse({"status": "already processed"})
 
-            with transaction.atomic():
-                payment = Payment.objects.select_for_update().get(
-                    razorpay_order_id=order_id
-                )
+            payment.status = "SUCCESS"
+            payment.razorpay_payment_id = payment_id
+            payment.razorpay_signature = signature
+            payment.save()
 
-                
-                payment.status = "SUCCESS"
-                payment.razorpay_payment_id = payment_id
-                payment.save(update_fields=["status","razorpay_payment_id"])
+            bookings = payment.bookings.select_related("seat")
 
-                bookings = payment.bookings.select_related("seat").all()
+            if not bookings.exists():
+                return JsonResponse({"status": "failed", "message": "No bookings found"}, status=400)
 
-                for booking in bookings:
-                    booking.status = "CONFIRMED"
-                    booking.save(update_fields=["status"])
+            for booking in bookings:
+                booking.status = "CONFIRMED"
+                booking.save()
 
-                    seat = booking.seat
-                    seat.is_booked = True
-                    seat.reserved_until = None
-                    seat.locked_by = None
-                    seat.save(update_fields=["is_booked","reserved_until","locked_by"])
+                seat = booking.seat
+                seat.is_booked = True
+                seat.reserved_until = None
+                seat.locked_by = None
+                seat.save()
 
-            return JsonResponse({"status": "success"})
+        return JsonResponse({"status": "success"})
 
-        except Exception as e:
-            print("ERROR:", e)
-            return JsonResponse({"status": "failed"})
+    except Payment.DoesNotExist:
+        return JsonResponse({"status": "failed", "message": "Payment not found"}, status=404)
 
-    return JsonResponse({"status": "invalid request"})
+    except razorpay.errors.SignatureVerificationError:
+        return JsonResponse({"status": "failed", "message": "Signature mismatch"}, status=400)
+
+    except Exception as e:
+        print("ERROR:", e)
+        return JsonResponse({"status": "failed", "message": str(e)}, status=500)
 
 @transaction.atomic
 def reserve_seat(request, seat_id):
@@ -329,10 +346,17 @@ def create_payment(request):
         )
 
         for booking in bookings:
+            if booking.status != "PENDING":
+                continue
+
             booking.payment = payment
             booking.save(update_fields=["payment"])
 
-    # clear session (important)
+            seat = booking.seat
+            seat.reserved_until = None
+            seat.locked_by = None
+            seat.save(update_fields=["reserved_until", "locked_by"])
+
     request.session['booking_ids'] = []
     request.session.modified = True
 
@@ -346,7 +370,6 @@ def create_payment(request):
         "order_id": order["id"],
         "razorpay_key": settings.RAZORPAY_KEY_ID,
     })
-
     
 @login_required
 @user_passes_test(admin_check)
