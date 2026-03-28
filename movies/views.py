@@ -117,7 +117,7 @@ def payment_success(request):
             return JsonResponse({"status": "failed"})
 
     return JsonResponse({"status": "invalid request"})
-    
+
 @transaction.atomic
 def reserve_seat(request, seat_id):
     try:
@@ -325,8 +325,7 @@ def create_payment(request):
 
     # create Payment and link all bookings
     payment = Payment.objects.create(
-    razorpay_order_id=order["id"],
-    user=request.user   
+    razorpay_order_id=order["id"]   
     )
     payment.bookings.set(bookings)
     payment.save()
