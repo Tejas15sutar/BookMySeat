@@ -93,22 +93,21 @@ def payment_success(request):
                 )
 
                 
-                if payment.status == "SUCCESS":
-                    return JsonResponse({"status": "already processed"})
-
-                payment.razorpay_payment_id = payment_id
                 payment.status = "SUCCESS"
-                payment.save(update_fields=['razorpay_payment_id', 'status'])
+                payment.razorpay_payment_id = payment_id
+                payment.save(update_fields=["status","razorpay_payment_id"])
 
-                for booking in payment.bookings.select_related('seat').all():
+                bookings = payment.bookings.select_related("seat").all()
+
+                for booking in bookings:
                     booking.status = "CONFIRMED"
-                    booking.save(update_fields=['status'])
+                    booking.save(update_fields=["status"])
 
                     seat = booking.seat
                     seat.is_booked = True
                     seat.reserved_until = None
                     seat.locked_by = None
-                    seat.save(update_fields=['is_booked', 'reserved_until', 'locked_by'])
+                    seat.save(update_fields=["is_booked","reserved_until","locked_by"])
 
             return JsonResponse({"status": "success"})
 
@@ -323,12 +322,19 @@ def create_payment(request):
         "payment_capture": 1
     })
 
-    # create Payment and link all bookings
-    payment = Payment.objects.create(
-    razorpay_order_id=order["id"]   
-    )
-    payment.bookings.set(bookings)
-    payment.save()
+    with transaction.atomic():
+        payment = Payment.objects.create(
+            razorpay_order_id=order["id"],
+            status="PENDING"
+        )
+
+        for booking in bookings:
+            booking.payment = payment
+            booking.save(update_fields=["payment"])
+
+    # clear session (important)
+    request.session['booking_ids'] = []
+    request.session.modified = True
 
     return render(request, "movies/payment_page.html", {
         "bookings": bookings,
@@ -340,7 +346,6 @@ def create_payment(request):
         "order_id": order["id"],
         "razorpay_key": settings.RAZORPAY_KEY_ID,
     })
-
 
     
 @login_required

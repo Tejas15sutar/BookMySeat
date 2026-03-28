@@ -25,7 +25,6 @@ def validate_youtube_url(value):
         raise ValidationError("Enter a valid YouTube URL.")
 
 class Payment(models.Model):
-    bookings = models.ManyToManyField("Booking", related_name="payments")
     razorpay_order_id = models.CharField(max_length=200)
     razorpay_payment_id = models.CharField(max_length=200, null=True, blank=True)
     razorpay_signature = models.TextField(null=True, blank=True)
@@ -176,6 +175,13 @@ class Booking(models.Model):
     booked_at = models.DateTimeField(
         auto_now_add=True,
         db_index=True
+    )
+    payment = models.ForeignKey(
+        "Payment",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="bookings"
     )
 
     def __str__(self):
