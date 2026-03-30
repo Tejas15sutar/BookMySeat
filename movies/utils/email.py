@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 def send_otp_email(email, otp):
     try:
         message = Mail(
-            from_email="tejassutar1507@gmail.com",   
+            from_email=settings.DEFAULT_FROM_EMAIL,  
             to_emails=email,
             subject='Your OTP Code',
             html_content=f'<strong>Your OTP is: {otp}</strong>'
