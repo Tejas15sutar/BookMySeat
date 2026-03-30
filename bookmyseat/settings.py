@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 import dj_database_url
-from dotenv import load_dotenv
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -72,7 +72,7 @@ RAZORPAY_KEY_SECRET = "U0yO4Vm2ofgjZ1rH5Mj3L7Qr"
 RAZORPAY_WEBHOOK_SECRET = "Tejas@1515"
 
 
-load_dotenv()
+
 import os
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
