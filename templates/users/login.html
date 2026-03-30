@@ -1,23 +1,38 @@
 {% extends "users/basic.html" %} {% block content %}
+
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
             <div class="card shadow">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="modal-title mb-0" id="loginModalLabel">
+                    <h5 class="modal-title mb-0">
                         <i class="fas fa-sign-in-alt me-2"></i> Log In
                     </h5>
                 </div>
+
+                ```
                 <div class="card-body">
                     <form method="POST" action="{% url 'login' %}">
                         {% csrf_token %}
-                        <!-- Username Input -->
+
+                        <!-- Email Input -->
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                <i class="fas fa-envelope"></i>
+                            </span>
+                                <input type="email" name="email" class="form-control" id="email" required>
+                            </div>
+                        </div>
+
+                        <!-- Username Input (optional keep/remove) -->
                         <div class="mb-3">
                             <label for="{{ form.username.id_for_label }}" class="form-label">Username</label>
                             <div class="input-group">
                                 <span class="input-group-text">
-                                    <i class="fas fa-user"></i>
-                                </span> {{ form.username }}
+                                <i class="fas fa-user"></i>
+                            </span> {{ form.username }}
                             </div>
                         </div>
 
@@ -26,30 +41,52 @@
                             <label for="{{ form.password.id_for_label }}" class="form-label">Password</label>
                             <div class="input-group">
                                 <span class="input-group-text">
-                                    <i class="fas fa-lock"></i>
-                                </span> {{ form.password }}
+                                <i class="fas fa-lock"></i>
+                            </span> {{ form.password }}
                                 <button class="btn btn-outline-secondary" type="button" id="togglePassword">
-                                    <i class="fas fa-eye" id="toggleIcon"></i>
-                                </button>
+                                <i class="fas fa-eye" id="toggleIcon"></i>
+                            </button>
                             </div>
                         </div>
 
-                        <!-- Submit Button -->
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-sign-in-alt me-2"></i> Login
+                        <!-- OTP Section -->
+                        <div class="mb-3">
+                            <label class="form-label">Verify Email</label>
+
+                            <div class="input-group mb-2">
+                                <input type="text" id="otp" class="form-control" placeholder="Enter OTP">
+                                <button type="button" class="btn btn-outline-primary" onclick="sendOTP()">
+                                Send OTP
                             </button>
+                            </div>
+
+                            <button type="button" class="btn btn-success w-100" onclick="verifyOTP()">
+                            Verify OTP
+                        </button>
+                        </div>
+
+                        <!-- Login Button -->
+                        <div class="d-grid">
+                            <button type="submit" id="loginBtn" class="btn btn-primary" disabled>
+                            <i class="fas fa-sign-in-alt me-2"></i> Login
+                        </button>
                         </div>
                     </form>
                 </div>
+
                 <div class="card-footer text-center">
                     <a href="{% url 'password_reset' %}" class="text-decoration-none">Forgot Password?</a>
                     <hr>
-                    <p class="mb-0">Don't have an account? <a href="{% url 'register' %}" class="text-decoration-none">Sign Up</a></p>
+                    <p class="mb-0">
+                        Don't have an account?
+                        <a href="{% url 'register' %}" class="text-decoration-none">Sign Up</a>
+                    </p>
                 </div>
             </div>
         </div>
     </div>
+    ```
+
 </div>
 
 <style>
@@ -85,6 +122,54 @@
             toggleIcon.classList.toggle('fa-eye-slash');
         });
     });
+
+    let otpVerified = false;
+
+    function sendOTP() {
+        let email = document.getElementById("email").value;
+
+        if (!email) {
+            alert("Enter email first");
+            return;
+        }
+
+        fetch("/send-otp/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: "email=" + email
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message || data.error);
+            });
+    }
+
+    function verifyOTP() {
+        let email = document.getElementById("email").value;
+        let otp = document.getElementById("otp").value;
+
+        fetch("/verify-otp/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: "email=" + email + "&otp=" + otp
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.message === "Verified") {
+                    alert("OTP Verified ✅");
+                    otpVerified = true;
+                    document.getElementById("loginBtn").disabled = false;
+                } else {
+                    alert(data.error);
+                }
+            });
+    }
 </script>
 
 {% endblock %}

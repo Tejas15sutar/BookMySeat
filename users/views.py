@@ -4,25 +4,89 @@ from django.shortcuts import render,redirect
 from django.contrib.auth import login,authenticate
 from django.contrib.auth.decorators import login_required
 from movies.models import Movie , Booking
+import random
+from django.http import JsonResponse
+from django.utils import timezone
+from datetime import timedelta
+from .models import EmailOTP
+from movies.utils.email import send_otp_email
+
 
 def home(request):
     movies=Movie.objects.all()
     return render(request, 'home.html',{'movies':movies})
 
+def generate_otp():
+    return str(random.randint(100000, 999999))
+
+
+def send_otp(request):
+    email = request.POST.get("email")
+
+    otp = generate_otp()
+
+    EmailOTP.objects.filter(email=email).delete()
+    EmailOTP.objects.create(email=email, otp=otp)
+
+    send_otp_email(email, otp)
+
+    return JsonResponse({"message": "OTP sent"})
+
+
+def verify_otp(request):
+    email = request.POST.get("email")
+    otp = request.POST.get("otp")
+
+    try:
+        record = EmailOTP.objects.filter(email=email).latest("created_at")
+
+        if timezone.now() - record.created_at > timedelta(minutes=5):
+            return JsonResponse({"error": "OTP expired"})
+
+        if record.otp == otp:
+            request.session['otp_verified'] = True   
+            request.session['otp_email'] = email     
+            return JsonResponse({"message": "Verified"})
+        else:
+            return JsonResponse({"error": "Invalid OTP"})
+
+    except:
+        return JsonResponse({"error": "No OTP found"})
+
 def register(request):
     if request.method == 'POST':
+
+        
+        if not request.session.get('otp_verified'):
+            return JsonResponse({"error": "Verify OTP first"})
+
         form = UserRegisterForm(request.POST)
+
         if form.is_valid():
+            email = form.cleaned_data.get('email')
+
+            
+            if email != request.session.get('otp_email'):
+                return JsonResponse({"error": "Email mismatch"})
+
             form.save()
+
+            
+            request.session.pop('otp_verified', None)
+            request.session.pop('otp_email', None)
+
             username = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password1')
-            user = authenticate(username = username,password = password)
-            login(request,user)
+
+            user = authenticate(username=username, password=password)
+            login(request, user)
+
             return redirect('profile')
-        
+
     else:
         form = UserRegisterForm()
-    return render(request,'users/register.html',{'form':form})
+
+    return render(request, 'users/register.html', {'form': form})
 
 def login_view(request):
     if request.method == 'POST':

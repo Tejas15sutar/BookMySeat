@@ -4,6 +4,7 @@ from django.template.loader import render_to_string
 from django.conf import settings
 import logging
 import threading 
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -35,3 +36,14 @@ def send_email_async(booking_data):
         args=(booking_data,)
     )
     thread.start()
+    
+def send_otp_email(email, otp):
+    message = Mail(
+        from_email='your_verified_email@gmail.com',
+        to_emails=email,
+        subject='Your OTP Code',
+        html_content=f'<strong>Your OTP is: {otp}</strong>'
+    )
+    print("API KEY:", os.getenv("SENDGRID_API_KEY"))
+    sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
+    sg.send(message)

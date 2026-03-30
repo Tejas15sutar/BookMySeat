@@ -23,6 +23,15 @@ def validate_youtube_url(value):
 
     else:
         raise ValidationError("Enter a valid YouTube URL.")
+    
+    
+class EmailOTP(models.Model):
+    email = models.EmailField()
+    otp = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.email
 
 class Payment(models.Model):
     razorpay_order_id = models.CharField(max_length=200)

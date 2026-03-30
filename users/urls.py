@@ -2,6 +2,7 @@ from django.urls import path
 from .views import register, login_view, profile, home
 from django.contrib.auth import views as auth_views
 from django.urls import path, reverse_lazy
+from .views import send_otp, verify_otp
 
 urlpatterns = [
     path('', home, name='home'),
@@ -34,4 +35,6 @@ urlpatterns = [
          auth_views.PasswordResetCompleteView.as_view(
              template_name='users/password_reset_complete.html'),
          name='password_reset_complete'),
+    path('send-otp/', send_otp, name='send_otp'),
+    path('verify-otp/', verify_otp, name='verify_otp'),
 ]
