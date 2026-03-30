@@ -17,6 +17,7 @@ from django.db.models.functions import ExtractHour
 from django.core.cache import cache
 from django.core.paginator import Paginator
 import threading
+from .utils.email import send_email_async
 from .tasks import send_ticket_email
 
 
@@ -153,8 +154,27 @@ def reserve_seat(request, seat_id):
     except Seat.DoesNotExist:
         return JsonResponse({"error": "Seat not found"}, status=404)
 
-def send_email_async(data):
-    send_ticket_email(data)
+def send_email_async(booking_data):
+    thread = threading.Thread(target=send_ticket_email, args=(booking_data,))
+    thread.start()
+    
+def create_booking(request):
+    booking = Booking.objects.create(...)
+
+    booking_data = {
+        "email": booking.user.email,
+        "user_name": booking.user.name,
+        "movie": booking.movie.name,
+        "theater": booking.theater.name,
+        "show_time": booking.show_time,
+        "seats": ", ".join([s.number for s in booking.seats.all()]),
+        "payment_id": booking.payment_id,
+    }
+
+    
+    send_email_async(booking_data)
+
+    return JsonResponse({"message": "Booking successful"})
 
 
 def movie_list(request):
