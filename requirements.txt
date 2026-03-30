@@ -5,4 +5,5 @@ gunicorn
 whitenoise
 psycopg2-binary
 razorpay
+sendgrid==6.11.0
 requests
