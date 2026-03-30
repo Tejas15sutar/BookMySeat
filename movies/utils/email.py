@@ -37,13 +37,22 @@ def send_email_async(booking_data):
     )
     thread.start()
     
+
+logger = logging.getLogger(__name__)
+
 def send_otp_email(email, otp):
-    message = Mail(
-        from_email='your_verified_email@gmail.com',
-        to_emails=email,
-        subject='Your OTP Code',
-        html_content=f'<strong>Your OTP is: {otp}</strong>'
-    )
-    print("API KEY:", os.getenv("SENDGRID_API_KEY"))
-    sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
-    sg.send(message)
+    try:
+        message = Mail(
+            from_email=settings.DEFAULT_FROM_EMAIL,  
+            to_emails=email,
+            subject='Your OTP Code',
+            html_content=f'<strong>Your OTP is: {otp}</strong>'
+        )
+
+        sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
+        response = sg.send(message)
+
+        logger.info(f"OTP Email sent: {response.status_code}")
+
+    except Exception as e:
+        logger.error(f"OTP Email failed: {str(e)}")
