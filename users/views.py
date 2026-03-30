@@ -23,7 +23,17 @@ def generate_otp():
 def send_otp(request):
     email = request.POST.get("email")
 
-    otp = str(generate_otp())  
+    if not email:
+        return JsonResponse({"error": "Email required"})
+
+    otp = str(generate_otp())
+
+    
+    existing = EmailOTP.objects.filter(email=email).first()
+    if existing:
+        time_diff = timezone.now() - existing.created_at
+        if time_diff.seconds < 60:
+            return JsonResponse({"error": "Wait 60 seconds before requesting OTP"})
 
     EmailOTP.objects.filter(email=email).delete()
     EmailOTP.objects.create(email=email, otp=otp)
@@ -40,18 +50,19 @@ def verify_otp(request):
     try:
         record = EmailOTP.objects.filter(email=email).latest("created_at")
 
-        
-        if str(record.otp).strip() == str(otp).strip():
+        # 1. FIRST check expiry
+        if timezone.now() - record.created_at > timedelta(minutes=5):
+            return JsonResponse({"error": "OTP expired"})
 
-            if timezone.now() - record.created_at > timedelta(minutes=5):
-                return JsonResponse({"error": "OTP expired"})
-
-            request.session['otp_verified'] = True
-            request.session['otp_email'] = email
-
-            return JsonResponse({"message": "Verified"})
-        else:
+        # 2. THEN check OTP
+        if str(record.otp).strip() != str(otp).strip():
             return JsonResponse({"error": "Invalid OTP"})
+
+        # success
+        request.session['otp_verified'] = True
+        request.session['otp_email'] = email
+
+        return JsonResponse({"message": "Verified"})
 
     except EmailOTP.DoesNotExist:
         return JsonResponse({"error": "No OTP found"})
@@ -59,7 +70,6 @@ def verify_otp(request):
 def register(request):
     if request.method == 'POST':
 
-        
         if not request.session.get('otp_verified'):
             return JsonResponse({"error": "Verify OTP first"})
 
@@ -68,20 +78,14 @@ def register(request):
         if form.is_valid():
             email = form.cleaned_data.get('email')
 
-            
             if email != request.session.get('otp_email'):
                 return JsonResponse({"error": "Email mismatch"})
 
-            form.save()
+            user = form.save()
 
-            
-            request.session.pop('otp_verified', None)
-            request.session.pop('otp_email', None)
+            # CLEAR SESSION (important)
+            request.session.flush()
 
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password1')
-
-            user = authenticate(username=username, password=password)
             login(request, user)
 
             return redirect('profile')
