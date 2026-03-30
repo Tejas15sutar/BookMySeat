@@ -75,12 +75,7 @@ RAZORPAY_WEBHOOK_SECRET = "Tejas@1515"
 
 import os
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'tejassutar1515@gmail.com'
-EMAIL_HOST_PASSWORD = 'baid rclz wnwm ysjp'
+DEFAULT_FROM_EMAIL = "no-reply@bookmyseat.com"
 
 
 LOGGING = {
