@@ -23,7 +23,7 @@ def generate_otp():
 def send_otp(request):
     email = request.POST.get("email")
 
-    otp = generate_otp()
+    otp = str(generate_otp())  
 
     EmailOTP.objects.filter(email=email).delete()
     EmailOTP.objects.create(email=email, otp=otp)
@@ -40,17 +40,20 @@ def verify_otp(request):
     try:
         record = EmailOTP.objects.filter(email=email).latest("created_at")
 
-        if timezone.now() - record.created_at > timedelta(minutes=5):
-            return JsonResponse({"error": "OTP expired"})
+        
+        if str(record.otp).strip() == str(otp).strip():
 
-        if record.otp == otp:
-            request.session['otp_verified'] = True   
-            request.session['otp_email'] = email     
+            if timezone.now() - record.created_at > timedelta(minutes=5):
+                return JsonResponse({"error": "OTP expired"})
+
+            request.session['otp_verified'] = True
+            request.session['otp_email'] = email
+
             return JsonResponse({"message": "Verified"})
         else:
             return JsonResponse({"error": "Invalid OTP"})
 
-    except:
+    except EmailOTP.DoesNotExist:
         return JsonResponse({"error": "No OTP found"})
 
 def register(request):
