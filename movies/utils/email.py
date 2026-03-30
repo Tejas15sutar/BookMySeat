@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 def send_otp_email(email, otp):
     try:
         message = Mail(
-            from_email=settings.DEFAULT_FROM_EMAIL,  
+            from_email="tejassutar1507@gmail.com",   
             to_emails=email,
             subject='Your OTP Code',
             html_content=f'<strong>Your OTP is: {otp}</strong>'
@@ -52,7 +52,7 @@ def send_otp_email(email, otp):
         sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
         response = sg.send(message)
 
-        logger.info(f"OTP Email sent: {response.status_code}")
+        print("SENDGRID STATUS:", response.status_code)
 
     except Exception as e:
-        logger.error(f"OTP Email failed: {str(e)}")
+        print("OTP ERROR:", str(e))

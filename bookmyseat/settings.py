@@ -75,7 +75,7 @@ RAZORPAY_WEBHOOK_SECRET = "Tejas@1515"
 
 import os
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
-DEFAULT_FROM_EMAIL = "no-reply@bookmyseat.com"
+DEFAULT_FROM_EMAIL = "tejassutar1507@gmail.com"
 
 
 LOGGING = {
