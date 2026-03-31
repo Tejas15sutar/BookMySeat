@@ -10,6 +10,7 @@ from django.utils import timezone
 from datetime import timedelta
 from .models import EmailOTP
 from movies.utils.email import send_otp_email
+from django.contrib.auth.models import User
 
 
 def home(request):
@@ -97,15 +98,32 @@ def register(request):
 
 def login_view(request):
     if request.method == 'POST':
-        form = AuthenticationForm(request, data = request.POST)
-        if form.is_valid():
-            user = form.get_user()
-            login(request,user)
+        email = request.POST.get("email")
+        password = request.POST.get("password")
+
+        try:
+            user_obj = User.objects.get(email=email)
+        except User.DoesNotExist:
+            user_obj = None
+
+        if user_obj is not None:
+            user = authenticate(
+                request,
+                username=user_obj.username,
+                password=password
+            )
+        else:
+            user = None
+
+        if user is not None:
+            login(request, user)
             return redirect('/')
-        
-    else:
-        form = AuthenticationForm()
-    return render(request,'users/login.html',{'form':form})
+        else:
+            return render(request, 'users/login.html', {
+                'error': 'Invalid email or password'
+            })
+
+    return render(request, 'users/login.html')
 
 @login_required
 def profile(request):
