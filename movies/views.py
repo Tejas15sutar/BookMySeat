@@ -244,23 +244,21 @@ def theater_list(request,movie_id):
 @login_required(login_url='/login/')
 def book_seats(request, theater_id):
     
-    theater = get_object_or_404(Theater, id=theater_id)
+    theaters = get_object_or_404(Theater, id=theater_id)
 
-    
     Seat.objects.filter(
         reserved_until__lt=timezone.now(),
         is_booked=False
     ).update(reserved_until=None, locked_by=None)
 
-    seats = Seat.objects.filter(theater=theater)
+    seats = Seat.objects.filter(theater=theaters)
 
     seat_data = []
-    now = timezone.now()
 
     for seat in seats:
         if seat.is_booked:
             status = "booked"
-        elif seat.reserved_until and seat.reserved_until > now:
+        elif seat.reserved_until and seat.reserved_until > timezone.now():
             status = "locked"
         else:
             status = "available"
@@ -271,80 +269,73 @@ def book_seats(request, theater_id):
             "reserved_until": seat.reserved_until
         })
 
-    
     if request.method == 'POST':
 
         selected_seats = request.POST.getlist('seats')
+        error_seats = []
 
         if not selected_seats:
             return render(request, "movies/seat_selection.html", {
-                'theater': theater,
-                'seats': seat_data,
+                'theater': theaters,
+                'seats': seats,
                 'error': "No seat selected"
             })
-
-        error_seats = []
-        created_bookings = []
-
+            
         with transaction.atomic():
 
-            now = timezone.now()
+            created_bookings = []
 
             for seat_id in selected_seats:
 
-               
-                seat = Seat.objects.select_for_update().filter(
-                    id=seat_id,
-                    theater=theater,
-                    is_booked=False
-                ).first()
-
-                
-                if not seat:
-                    error_seats.append(f"Seat-{seat_id}")
+                try:
+                    seat = Seat.objects.select_for_update().get(
+                        id=seat_id,
+                        theater=theaters
+                    )
+                except Seat.DoesNotExist:
                     continue
 
-                
-                if seat.reserved_until and seat.reserved_until > now:
+                if seat.is_booked:
+                    error_seats.append(seat.seat_number)
+                    continue
+
+                if seat.reserved_until and seat.reserved_until > timezone.now():
                     if seat.locked_by != request.user:
                         error_seats.append(seat.seat_number)
                         continue
 
-                
-                seat.reserved_until = now + timedelta(minutes=2)
+                seat.reserved_until = timezone.now() + timedelta(minutes=2)
                 seat.locked_by = request.user
-                seat.save(update_fields=["reserved_until", "locked_by"])
+                seat.save()
 
-                
                 booking = Booking.objects.create(
                     user=request.user,
                     seat=seat,
-                    movie=theater.movie,
-                    theater=theater,
+                    movie=theaters.movie,
+                    theater=theaters,
                     status="PENDING",
                     amount=200
                 )
 
                 created_bookings.append(booking)
 
-        
         if error_seats:
-            return render(request, "movies/seat_selection.html", {
-                'theater': theater,
+            error_message = f"The following seats are not available: {', '.join(error_seats)}"
+            return render(request, 'movies/seat_selection.html', {
+                'theater': theaters,
                 'seats': seat_data,
-                'error': f"Seats not available: {', '.join(error_seats)}"
+                'error': error_message
             })
 
-        
         if created_bookings:
             request.session['booking_ids'] = [b.id for b in created_bookings]
             return redirect('create_payment')
 
-    return render(request, "movies/seat_selection.html", {
-        'theater': theater,
+    return render(request, 'movies/seat_selection.html', {
+        'theater': theaters,
         'seats': seat_data
     })
-
+    
 def create_payment(request):
     booking_ids = request.session.get('booking_ids', [])
     bookings = Booking.objects.filter(id__in=booking_ids, status="PENDING")
