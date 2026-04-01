@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 import dj_database_url
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -121,12 +121,12 @@ WSGI_APPLICATION = 'bookmyseat.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-load_dotenv()
-DATABASE_URL = os.getenv("DATABASE_URL")
+# load_dotenv()
+# DATABASE_URL = os.getenv("DATABASE_URL")
 
 DATABASES = {
     "default": dj_database_url.config(
-        default=DATABASE_URL,
+        # default=DATABASE_URL,
         conn_max_age=0,
         ssl_require=True
     )
