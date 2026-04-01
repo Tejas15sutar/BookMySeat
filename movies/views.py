@@ -255,7 +255,6 @@ def book_seats(request, theater_id):
     seats = Seat.objects.filter(theater=theater)
 
     seat_data = []
-
     now = timezone.now()
 
     for seat in seats:
@@ -272,7 +271,7 @@ def book_seats(request, theater_id):
             "reserved_until": seat.reserved_until
         })
 
-   
+    
     if request.method == 'POST':
 
         selected_seats = request.POST.getlist('seats')
@@ -289,22 +288,20 @@ def book_seats(request, theater_id):
 
         with transaction.atomic():
 
+            now = timezone.now()
+
             for seat_id in selected_seats:
 
-                try:
-                    
-                    seat = Seat.objects.select_for_update().get(
-                        id=seat_id,
-                        theater=theater
-                    )
-                except Seat.DoesNotExist:
-                    continue
-
-                now = timezone.now()
-
                
-                if seat.is_booked:
-                    error_seats.append(seat.seat_number)
+                seat = Seat.objects.select_for_update().filter(
+                    id=seat_id,
+                    theater=theater,
+                    is_booked=False
+                ).first()
+
+                
+                if not seat:
+                    error_seats.append(f"Seat-{seat_id}")
                     continue
 
                 
@@ -318,6 +315,7 @@ def book_seats(request, theater_id):
                 seat.locked_by = request.user
                 seat.save(update_fields=["reserved_until", "locked_by"])
 
+                
                 booking = Booking.objects.create(
                     user=request.user,
                     seat=seat,
@@ -331,7 +329,7 @@ def book_seats(request, theater_id):
 
         
         if error_seats:
-            return render(request, 'movies/seat_selection.html', {
+            return render(request, "movies/seat_selection.html", {
                 'theater': theater,
                 'seats': seat_data,
                 'error': f"Seats not available: {', '.join(error_seats)}"
@@ -342,7 +340,7 @@ def book_seats(request, theater_id):
             request.session['booking_ids'] = [b.id for b in created_bookings]
             return redirect('create_payment')
 
-    return render(request, 'movies/seat_selection.html', {
+    return render(request, "movies/seat_selection.html", {
         'theater': theater,
         'seats': seat_data
     })
