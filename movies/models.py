@@ -194,14 +194,5 @@ class Booking(models.Model):
         related_name="bookings"
     )
 
-    class Meta:
-        constraints = [
-        models.UniqueConstraint(
-            fields=['seat'],
-            condition=models.Q(status='CONFIRMED'),
-            name='unique_confirmed_seat'
-        )
-    ]
-
     def __str__(self):
         return f'Booking by {self.user.username} for {self.seat.seat_number} at {self.theater.name}'

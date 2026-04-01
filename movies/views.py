@@ -1,6 +1,5 @@
 from django.shortcuts import render , redirect , get_object_or_404
 from .models import Movie,Theater,Seat,Booking, Payment ,Language
-from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
 from django.db import transaction
@@ -245,23 +244,21 @@ def theater_list(request,movie_id):
 @login_required(login_url='/login/')
 def book_seats(request, theater_id):
     
-    theater = get_object_or_404(Theater, id=theater_id)
+    theaters = get_object_or_404(Theater, id=theater_id)
 
-    # साफ expired locks
     Seat.objects.filter(
         reserved_until__lt=timezone.now(),
         is_booked=False
     ).update(reserved_until=None, locked_by=None)
 
-    seats = Seat.objects.filter(theater=theater)
+    seats = Seat.objects.filter(theater=theaters)
 
     seat_data = []
-    now = timezone.now()
 
     for seat in seats:
         if seat.is_booked:
             status = "booked"
-        elif seat.reserved_until and seat.reserved_until > now:
+        elif seat.reserved_until and seat.reserved_until > timezone.now():
             status = "locked"
         else:
             status = "available"
@@ -272,90 +269,70 @@ def book_seats(request, theater_id):
             "reserved_until": seat.reserved_until
         })
 
-    
     if request.method == 'POST':
 
         selected_seats = request.POST.getlist('seats')
+        error_seats = []
 
         if not selected_seats:
             return render(request, "movies/seat_selection.html", {
-                'theater': theater,
-                'seats': seat_data,
+                'theater': theaters,
+                'seats': seats,
                 'error': "No seat selected"
             })
 
-        error_seats = []
-        created_bookings = []
-
         with transaction.atomic():
+
+            created_bookings = []
 
             for seat_id in selected_seats:
 
                 try:
                     seat = Seat.objects.select_for_update().get(
                         id=seat_id,
-                        theater=theater
+                        theater=theaters
                     )
                 except Seat.DoesNotExist:
                     continue
 
-                now = timezone.now()
-
-                # HARD CHECK 1: Already booked
                 if seat.is_booked:
                     error_seats.append(seat.seat_number)
                     continue
 
-                
-                already_taken = Booking.objects.filter(
-                    seat=seat
-                ).filter(
-                    Q(status="CONFIRMED") |
-                    Q(status="PENDING", booked_at__gte=now - timedelta(minutes=2))
-                ).exists()
-
-                if already_taken:
-                    error_seats.append(seat.seat_number)
-                    continue
-
-                # HARD CHECK 3: Seat locked by another user
-                if seat.reserved_until and seat.reserved_until > now:
+                if seat.reserved_until and seat.reserved_until > timezone.now():
                     if seat.locked_by != request.user:
                         error_seats.append(seat.seat_number)
                         continue
 
-                # LOCK seat
-                seat.reserved_until = now + timedelta(minutes=2)
+                seat.reserved_until = timezone.now() + timedelta(minutes=2)
                 seat.locked_by = request.user
-                seat.save(update_fields=["reserved_until", "locked_by"])
+                seat.save()
 
-                # CREATE booking
                 booking = Booking.objects.create(
                     user=request.user,
                     seat=seat,
-                    movie=theater.movie,
-                    theater=theater,
+                    movie=theaters.movie,
+                    theater=theaters,
                     status="PENDING",
                     amount=200
                 )
 
                 created_bookings.append(booking)
 
-        
         if error_seats:
+            error_message = f"The following seats are not available: {', '.join(error_seats)}"
             return render(request, 'movies/seat_selection.html', {
-                'theater': theater,
+                'theater': theaters,
                 'seats': seat_data,
-                'error': f"Seats not available: {', '.join(error_seats)}"
+                'error': error_message
             })
 
-        
         if created_bookings:
             request.session['booking_ids'] = [b.id for b in created_bookings]
             return redirect('create_payment')
 
     return render(request, 'movies/seat_selection.html', {
-        'theater': theater,
+        'theater': theaters,
         'seats': seat_data
     })
     
