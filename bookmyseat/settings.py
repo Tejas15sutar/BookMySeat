@@ -119,16 +119,17 @@ TEMPLATES = [
 WSGI_APPLICATION = 'bookmyseat.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-# load_dotenv()
-# DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 DATABASES = {
-    'default': dj_database_url.parse(os.getenv("DATABASE_URL"))
-        # default=DATABASE_URL,
-    
+    'default': dj_database_url.parse(DATABASE_URL)
 }
+
+
+DATABASES['default']['OPTIONS'] = {
+    'sslmode': 'require',
+}
+
 #DATABASES['default'] = dj_database_url.parse('postgresql://django_bookmyshow_v4i3_user:pUaMwrRapPCwis3yZdGw00PyMLRn0obL@dpg-d6hebmp5pdvs73dgin40-a.oregon-postgres.render.com/django_bookmyshow_v4i3')
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
