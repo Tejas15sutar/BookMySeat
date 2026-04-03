@@ -13,7 +13,20 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 import dj_database_url
-# from dotenv import load_dotenv
+
+if os.path.exists(".env"):
+    from dotenv import load_dotenv
+    load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+DATABASES = {
+    'default': dj_database_url.parse(DATABASE_URL)
+}
+
+DATABASES['default']['OPTIONS'] = {
+    'sslmode': 'require',
+}
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -118,17 +131,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'bookmyseat.wsgi.application'
 
-
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-DATABASES = {
-    'default': dj_database_url.parse(DATABASE_URL)
-}
-
-
-DATABASES['default']['OPTIONS'] = {
-    'sslmode': 'require',
-}
 
 #DATABASES['default'] = dj_database_url.parse('postgresql://django_bookmyshow_v4i3_user:pUaMwrRapPCwis3yZdGw00PyMLRn0obL@dpg-d6hebmp5pdvs73dgin40-a.oregon-postgres.render.com/django_bookmyshow_v4i3')
 # Password validation
