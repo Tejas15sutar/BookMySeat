@@ -371,11 +371,8 @@ def create_payment(request):
             booking.payment = payment
             booking.save(update_fields=["payment"])
 
-            seat = booking.seat
-            seat.reserved_until = None
-            seat.locked_by = None
-            seat.save(update_fields=["reserved_until", "locked_by"])
-
+            
+           
     request.session['booking_ids'] = []
     request.session.modified = True
 
