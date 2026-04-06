@@ -10,14 +10,29 @@ logger = logging.getLogger(__name__)
 
 def send_ticket_email(booking_data):
     try:
-        html_content = render_to_string(
-            "emails/ticket_confirmation.html",
-            booking_data
-        )
+        print("EMAIL FUNCTION STARTED")
+
+        # 
+        try:
+            html_content = render_to_string(
+                "emails/ticket_confirmation.html",
+                booking_data
+            )
+        except Exception as template_error:
+            print("TEMPLATE ERROR:", str(template_error))
+            html_content = f"""
+            <h2>Booking Confirmed</h2>
+            <p>Movie: {booking_data.get('movie')}</p>
+            <p>Theater: {booking_data.get('theater')}</p>
+            <p>Seats: {booking_data.get('seats')}</p>
+            <p>Payment ID: {booking_data.get('payment_id')}</p>
+            """
+
+        print("📧 Sending to:", booking_data.get("email"))
 
         message = Mail(
-            from_email='no-reply@bookmyseat.com',  
-            to_emails=booking_data["email"],
+            from_email='no-reply@bookmyseat.com',
+            to_emails=booking_data.get("email"),
             subject='🎟 Your Movie Ticket Confirmation',
             html_content=html_content
         )
@@ -25,10 +40,10 @@ def send_ticket_email(booking_data):
         sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
         response = sg.send(message)
 
-        logger.info(f"Email sent successfully: {response.status_code}")
+        print("✅ SENDGRID STATUS:", response.status_code)
 
     except Exception as e:
-        logger.error(f"Email failed: {str(e)}")
+        print("EMAIL ERROR:", str(e))
     
 def send_email_async(booking_data):
     thread = threading.Thread(
