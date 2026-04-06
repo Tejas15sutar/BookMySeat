@@ -48,12 +48,16 @@
             <!-- PAY BUTTON -->
             <button id="pay-btn" class="pay-btn">Pay Now</button>
 
+            <!--  LOADER -->
+            <div id="payment-loader" style="display:none; text-align:center; margin-top:15px;">
+                <div class="spinner"></div>
+                <p style="margin-top:10px;">Processing your payment...</p>
+            </div>
 
         </div>
     </div>
 
 </div>
-
 
 <style>
     .payment-card {
@@ -126,15 +130,30 @@
         background: #218838;
         transform: scale(1.03);
     }
+    /* LOADER */
+    
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #ddd;
+        border-top: 4px solid #28a745;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: auto;
+    }
+    
+    @keyframes spin {
+        100% {
+            transform: rotate(360deg);
+        }
+    }
 </style>
 
 <!-- RAZORPAY -->
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
-
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-
 
         function getCSRFToken() {
             var cookies = document.cookie.split(';');
@@ -149,25 +168,19 @@
 
         var payBtn = document.getElementById("pay-btn");
 
-        if (!payBtn) {
-            console.error("Pay button not found!");
-            return;
-        }
-
         payBtn.addEventListener("click", function(e) {
             e.preventDefault();
 
+            // Disable button instantly
+            payBtn.disabled = true;
+            payBtn.innerText = "Processing...";
+
             var options = {
                 key: "{{ razorpay_key }}",
-
-
                 amount: "{{ total_amount|floatformat:0 }}00",
-
                 currency: "INR",
                 name: "BookMySeat",
                 description: "Movie Ticket Payment",
-
-
                 order_id: "{{ order_id }}",
 
                 prefill: {
@@ -178,7 +191,8 @@
 
                 handler: function(response) {
 
-                    console.log("Payment Success:", response);
+                    // Show loader
+                    document.getElementById("payment-loader").style.display = "block";
 
                     fetch("/movies/payment-success/", {
                             method: "POST",
@@ -194,23 +208,27 @@
                         })
                         .then(res => res.json())
                         .then(data => {
-                            console.log("SERVER RESPONSE:", data);
 
                             if (data.status === "success" || data.status === "already processed") {
-                                alert("Payment successful 🎉");
                                 window.location.href = "/profile/";
                             } else {
-                                alert("Payment verification failed ❌");
+                                alert("Payment verification failed ");
+                                payBtn.disabled = false;
+                                payBtn.innerText = "Pay Now";
                             }
                         })
                         .catch(err => {
                             console.error("Fetch error:", err);
                             alert("Something went wrong!");
+                            payBtn.disabled = false;
+                            payBtn.innerText = "Pay Now";
                         });
                 },
 
                 modal: {
                     ondismiss: function() {
+                        payBtn.disabled = false;
+                        payBtn.innerText = "Pay Now";
                         alert("Payment cancelled");
                     }
                 },
@@ -223,8 +241,9 @@
             var rzp = new Razorpay(options);
 
             rzp.on('payment.failed', function(response) {
-                console.error("Payment Failed:", response.error);
                 alert("Payment Failed: " + response.error.description);
+                payBtn.disabled = false;
+                payBtn.innerText = "Pay Now";
             });
 
             rzp.open();
