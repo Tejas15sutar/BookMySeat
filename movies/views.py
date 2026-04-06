@@ -18,7 +18,6 @@ from django.core.cache import cache
 from django.core.paginator import Paginator
 import threading
 from .utils.email import send_ticket_email
-from .tasks import send_ticket_email
 
 
 
@@ -216,7 +215,7 @@ def create_booking(request):
     }
 
     
-    send_email_async(booking_data)
+    send_ticket_email(booking_data)
 
     return JsonResponse({"message": "Booking successful"})
 
