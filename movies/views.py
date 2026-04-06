@@ -80,61 +80,107 @@ def payment_success(request):
         order_id = data.get("razorpay_order_id")
         signature = data.get("razorpay_signature")
 
-        if not payment_id or not order_id:
-            return JsonResponse({"status": "failed", "message": "Missing data"}, status=400)
+        if not payment_id or not order_id or not signature:
+            return JsonResponse({
+                "status": "failed",
+                "message": "Missing payment data"
+            }, status=400)
 
         client = razorpay.Client(
             auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
         )
 
-        # VERIFY SIGNATURE
-        client.utility.verify_payment_signature({
-            "razorpay_order_id": order_id,
-            "razorpay_payment_id": payment_id,
-            "razorpay_signature": signature
-        })
+        
+        try:
+            client.utility.verify_payment_signature({
+                "razorpay_order_id": order_id,
+                "razorpay_payment_id": payment_id,
+                "razorpay_signature": signature
+            })
+        except razorpay.errors.SignatureVerificationError:
+            return JsonResponse({
+                "status": "failed",
+                "message": "Signature mismatch"
+            }, status=400)
 
         with transaction.atomic():
+
             payment = Payment.objects.select_for_update().get(
                 razorpay_order_id=order_id
             )
 
-            # prevent double processing
+            
             if payment.status == "SUCCESS":
                 return JsonResponse({"status": "already processed"})
 
+            
             payment.status = "SUCCESS"
             payment.razorpay_payment_id = payment_id
             payment.razorpay_signature = signature
             payment.save()
 
-            bookings = payment.bookings.select_related("seat")
+            
+            bookings = payment.bookings.select_related(
+                "seat", "user", "movie", "theater"
+            )
 
             if not bookings.exists():
-                return JsonResponse({"status": "failed", "message": "No bookings found"}, status=400)
+                return JsonResponse({
+                    "status": "failed",
+                    "message": "No bookings found"
+                }, status=400)
 
+            
             for booking in bookings:
                 booking.status = "CONFIRMED"
-                booking.save()
+                booking.save(update_fields=["status"])
 
                 seat = booking.seat
                 seat.is_booked = True
                 seat.reserved_until = None
                 seat.locked_by = None
-                seat.save()
+                seat.save(update_fields=[
+                    "is_booked", "reserved_until", "locked_by"
+                ])
+
+        
+        try:
+            first_booking = bookings.first()
+
+            booking_data = {
+                "email": first_booking.user.email,
+                "user_name": first_booking.user.username,
+                "movie": first_booking.movie.name,
+                "theater": first_booking.theater.name,
+                "seats": ", ".join(
+                    [b.seat.seat_number for b in bookings]
+                ),
+                "payment_id": payment_id,
+            }
+
+            print("📧 Sending email to:", booking_data["email"])
+
+            send_email_async(booking_data)
+
+        except Exception as email_error:
+            
+            print("EMAIL ERROR:", str(email_error))
 
         return JsonResponse({"status": "success"})
 
     except Payment.DoesNotExist:
-        return JsonResponse({"status": "failed", "message": "Payment not found"}, status=404)
-
-    except razorpay.errors.SignatureVerificationError:
-        return JsonResponse({"status": "failed", "message": "Signature mismatch"}, status=400)
+        return JsonResponse({
+            "status": "failed",
+            "message": "Payment not found"
+        }, status=404)
 
     except Exception as e:
-        print("ERROR:", e)
-        return JsonResponse({"status": "failed", "message": str(e)}, status=500)
-
+        print("ERROR:", str(e))
+        return JsonResponse({
+            "status": "failed",
+            "message": "Internal server error"
+        }, status=500)
+        
 @transaction.atomic
 def reserve_seat(request, seat_id):
     try:
