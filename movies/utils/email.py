@@ -31,7 +31,7 @@ def send_ticket_email(booking_data):
         print("📧 Sending to:", booking_data.get("email"))
 
         message = Mail(
-            from_email='no-reply@bookmyseat.com',
+            from_email=settings.DEFAULT_FROM_EMAIL,
             to_emails=booking_data.get("email"),
             subject='🎟 Your Movie Ticket Confirmation',
             html_content=html_content
