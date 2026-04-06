@@ -151,10 +151,12 @@ def payment_success(request):
                 "user_name": first_booking.user.username,
                 "movie": first_booking.movie.name,
                 "theater": first_booking.theater.name,
+                "show_time": str(first_booking.theater.time),
                 "seats": ", ".join(
                     [b.seat.seat_number for b in bookings]
                 ),
                 "payment_id": payment_id,
+                "booking_id": first_booking.id,
             }
 
             print("📧 Sending email to:", booking_data["email"])
