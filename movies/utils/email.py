@@ -16,7 +16,7 @@ def send_ticket_email(booking_data):
         try:
             html_content = render_to_string(
                 "emails/ticket_confirmation.html",
-                booking_data
+                 {"data": booking_data}
             )
         except Exception as template_error:
             print("TEMPLATE ERROR:", str(template_error))
