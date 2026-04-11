@@ -322,7 +322,7 @@ def book_seats(request, theater_id):
         if not selected_seats:
             return render(request, "movies/seat_selection.html", {
                 'theater': theaters,
-                'seats': seats,
+                'seats': seat_data,
                 'error': "No seat selected"
             })
 

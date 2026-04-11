@@ -31,6 +31,11 @@
             <!-- Seat Selection -->
             <div class="card">
                 <div class="card-body">
+                    {% if error %}
+                    <div class="alert alert-danger text-center">
+                        {{ error }}
+                    </div>
+                    {% endif %}
 
                     <h5 class="text-center mb-4">Select Your Seats</h5>
                     <div class="screen">SCREEN</div>
@@ -97,7 +102,7 @@
 
                         <!-- Submit -->
                         <div class="text-center">
-                            <button type="submit" class="btn btn-success btn-lg" onclick="this.disabled=true; this.form.submit();">
+                            <button type="submit" class="btn btn-success btn-lg">
                                 Book Selected Seats
                             </button>
                         </div>
@@ -168,6 +173,17 @@
                 label.classList.remove('selected');
             }
         });
+    });
+</script>
+<script>
+    document.getElementById("seatForm").addEventListener("submit", function(e) {
+        const selectedSeats = document.querySelectorAll('input[name="seats"]:checked');
+
+        if (selectedSeats.length === 0) {
+            e.preventDefault(); // stop form submission
+            alert("Please select at least one seat!");
+            return false;
+        }
     });
 </script>
 
